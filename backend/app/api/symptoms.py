@@ -50,7 +50,7 @@ async def _store_symptom_analysis(
     disease_prediction: Optional[dict],
     dengue_prediction: Optional[dict],
     extra: Optional[dict] = None,
-) -> None:
+) -> tuple[bool, Optional[str]]:
     """Persist every symptom analysis result for longitudinal chat context."""
     try:
         payload = {
@@ -63,9 +63,11 @@ async def _store_symptom_analysis(
         }
         if extra:
             payload["meta"] = extra
-        await symptom_analyses().insert_one(payload)
+        inserted = await symptom_analyses().insert_one(payload)
+        return True, str(inserted.inserted_id)
     except Exception as exc:
         log.warning(f"Could not save symptom analysis history: {exc}")
+        return False, None
 
 
 # Load valid symptoms
@@ -211,7 +213,7 @@ async def log_symptoms(
         {"$inc": {"total_symptom_logs": 1}}
     )
 
-    await _store_symptom_analysis(
+    context_saved, context_record_id = await _store_symptom_analysis(
         user_id=user_id,
         symptoms=data.symptoms,
         analysis_mode="log",
@@ -225,7 +227,9 @@ async def log_symptoms(
         "log_id": log_id,
         "message": "Symptoms logged successfully",
         "prediction": prediction,
-        "high_risk_alert": prediction.get("confidence", 0) >= 0.7
+        "high_risk_alert": prediction.get("confidence", 0) >= 0.7,
+        "context_saved": context_saved,
+        "context_record_id": context_record_id,
     }
 
 
@@ -254,7 +258,20 @@ async def predict(
     cache_key = f"predict:{hashlib.sha256(json.dumps(cache_payload, sort_keys=True).encode()).hexdigest()[:24]}"
     cached = await cache_get(cache_key)
     if cached:
-        return {"prediction": cached, "from_cache": True}
+        context_saved, context_record_id = await _store_symptom_analysis(
+            user_id=current_user["_id"],
+            symptoms=normalized_symptoms,
+            analysis_mode="predict",
+            disease_prediction=cached.get("disease_prediction"),
+            dengue_prediction=cached.get("dengue_prediction"),
+            extra={"age": data.age, "district": data.district, "has_lab_values": cached.get("has_lab_values"), "from_cache": True},
+        )
+        return {
+            "prediction": cached,
+            "from_cache": True,
+            "context_saved": context_saved,
+            "context_record_id": context_record_id,
+        }
 
     # Always run general disease classifier
     disease_result = predict_disease(normalized_symptoms)
@@ -288,7 +305,7 @@ async def predict(
         "symptoms_analyzed": normalized_symptoms
     }
 
-    await _store_symptom_analysis(
+    context_saved, context_record_id = await _store_symptom_analysis(
         user_id=current_user["_id"],
         symptoms=normalized_symptoms,
         analysis_mode="predict",
@@ -300,7 +317,12 @@ async def predict(
     # Cache for 1 hour
     await cache_set(cache_key, response, ttl_seconds=3600)
 
-    return {"prediction": response, "from_cache": False}
+    return {
+        "prediction": response,
+        "from_cache": False,
+        "context_saved": context_saved,
+        "context_record_id": context_record_id,
+    }
 
 
 @router.post("/predict-dengue")
@@ -323,7 +345,25 @@ async def predict_dengue_only(
     cache_key = f"predict_dengue:{hashlib.sha256(json.dumps(cache_payload, sort_keys=True).encode()).hexdigest()[:24]}"
     cached = await cache_get(cache_key)
     if cached:
-        return {"prediction": cached, "from_cache": True}
+        context_saved, context_record_id = await _store_symptom_analysis(
+            user_id=current_user["_id"],
+            symptoms=data.symptoms,
+            analysis_mode="dengue_only",
+            disease_prediction=None,
+            dengue_prediction=cached.get("dengue_prediction"),
+            extra={
+                "lab_inputs_used": cached.get("lab_inputs_used"),
+                "age": data.age,
+                "district": data.district,
+                "from_cache": True,
+            },
+        )
+        return {
+            "prediction": cached,
+            "from_cache": True,
+            "context_saved": context_saved,
+            "context_record_id": context_record_id,
+        }
 
     dengue_inputs = {
         "NS1": data.ns1_result or 0,
@@ -347,7 +387,7 @@ async def predict_dengue_only(
         },
     }
 
-    await _store_symptom_analysis(
+    context_saved, context_record_id = await _store_symptom_analysis(
         user_id=current_user["_id"],
         symptoms=data.symptoms,
         analysis_mode="dengue_only",
@@ -356,7 +396,12 @@ async def predict_dengue_only(
         extra={"lab_inputs_used": response["lab_inputs_used"], "age": data.age, "district": data.district},
     )
     await cache_set(cache_key, response, ttl_seconds=3600)
-    return {"prediction": response, "from_cache": False}
+    return {
+        "prediction": response,
+        "from_cache": False,
+        "context_saved": context_saved,
+        "context_record_id": context_record_id,
+    }
 
 
 @router.get("/history")

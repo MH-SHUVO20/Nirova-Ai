@@ -72,6 +72,11 @@ export default function DenguePage() {
         district: user?.district || null,
       })
       setResult(res.data?.prediction?.dengue_prediction || null)
+      if (res.data?.context_saved === false) {
+        toast.error('Prediction done, but context was not saved to database.')
+      } else {
+        window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'dengue' } }))
+      }
       toast.success('Dengue prediction ready')
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Dengue prediction failed')

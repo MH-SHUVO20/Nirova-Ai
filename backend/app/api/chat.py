@@ -438,6 +438,37 @@ async def get_context_preview(
                 updated_at=symptom_doc.get("created_at"),
             )
 
+        if mode in {"general", "chat", "dashboard", "timeline"}:
+            latest_vision = await vision_analyses().find_one(
+                {"user_id": user_id},
+                sort=[("created_at", -1)],
+                projection={"analysis_type": 1, "analysis": 1, "created_at": 1},
+            )
+            latest_symptom = await symptom_analyses().find_one(
+                {"user_id": user_id},
+                sort=[("created_at", -1)],
+                projection={
+                    "analysis_mode": 1,
+                    "symptoms": 1,
+                    "disease_prediction": 1,
+                    "dengue_prediction": 1,
+                    "created_at": 1,
+                },
+            )
+            latest_ts = None
+            if latest_vision and latest_vision.get("created_at"):
+                latest_ts = latest_vision["created_at"]
+            if latest_symptom and latest_symptom.get("created_at"):
+                if not latest_ts or latest_symptom["created_at"] > latest_ts:
+                    latest_ts = latest_symptom["created_at"]
+
+            return ContextPreviewResponse(
+                agent_mode=mode,
+                label="Overall Patient Context",
+                summary=_summarize_overall_context(latest_vision, latest_symptom),
+                updated_at=latest_ts,
+            )
+
         return ContextPreviewResponse(
             agent_mode=mode,
             label="Context Status",
@@ -609,6 +640,38 @@ def _summarize_symptom_analysis_record(doc: dict) -> str:
     return "; ".join(parts)
 
 
+def _mode_scoped_filters(agent_mode: str) -> tuple[dict, dict]:
+    """Return (vision_filter, symptom_filter) for mode-aware context retrieval."""
+    mode = (agent_mode or "general").strip().lower()
+    vision_filter = {}
+    symptom_filter = {}
+
+    if mode == "skin":
+        vision_filter["analysis_type"] = "skin"
+    elif mode == "lab":
+        vision_filter["analysis_type"] = "lab"
+    elif mode == "prescription":
+        vision_filter["analysis_type"] = "prescription"
+
+    if mode == "dengue":
+        symptom_filter["analysis_mode"] = "dengue_only"
+    elif mode == "symptoms":
+        symptom_filter["analysis_mode"] = {"$in": ["log", "predict"]}
+
+    return vision_filter, symptom_filter
+
+
+def _summarize_overall_context(latest_vision: Optional[dict], latest_symptom: Optional[dict]) -> str:
+    parts = []
+    if latest_vision:
+        parts.append(_summarize_vision_record(latest_vision))
+    if latest_symptom:
+        parts.append(_summarize_symptom_analysis_record(latest_symptom))
+    if not parts:
+        return "No recent analysis found yet. Chat will use your message and medical guidance baseline."
+    return " | ".join(parts)
+
+
 async def _get_medical_context(
     query: str,
     user_id: Optional[ObjectId] = None,
@@ -634,19 +697,14 @@ async def _get_medical_context(
 
         if user_id:
             user_insights = []
-            vision_filter = {"user_id": user_id}
             mode = (agent_mode or "general").strip().lower()
-            if mode == "skin":
-                vision_filter["analysis_type"] = "skin"
-            elif mode == "lab":
-                vision_filter["analysis_type"] = "lab"
-            elif mode == "prescription":
-                vision_filter["analysis_type"] = "prescription"
+            vision_scope, symptom_scope = _mode_scoped_filters(mode)
+            vision_filter = {"user_id": user_id, **vision_scope}
 
             cursor = vision_analyses().find(
                 vision_filter,
                 {"analysis_type": 1, "analysis": 1, "created_at": 1, "_id": 0}
-            ).sort("created_at", -1).limit(5)
+            ).sort("created_at", -1).limit(3)
             async for doc in cursor:
                 user_insights.append(_summarize_vision_record(doc))
 
@@ -666,8 +724,9 @@ async def _get_medical_context(
                 chunks.insert(0, personal_context)
 
             symptom_insights = []
+            symptom_filter = {"user_id": user_id, **symptom_scope}
             symptom_cursor = symptom_analyses().find(
-                {"user_id": user_id},
+                symptom_filter,
                 {
                     "analysis_mode": 1,
                     "symptoms": 1,
@@ -676,7 +735,7 @@ async def _get_medical_context(
                     "created_at": 1,
                     "_id": 0,
                 },
-            ).sort("created_at", -1).limit(5)
+            ).sort("created_at", -1).limit(3)
             async for doc in symptom_cursor:
                 symptom_insights.append(_summarize_symptom_analysis_record(doc))
 

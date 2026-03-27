@@ -52,7 +52,11 @@ export default function SymptomsPage() {
     try {
       const res = await symptomsAPI.log({ symptoms: selected, severity, notes })
       setResult(res.data)
-      window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'symptoms' } }))
+      if (res.data?.context_saved === false) {
+        toast.error('Symptoms analyzed, but context was not saved to database.')
+      } else {
+        window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'symptoms' } }))
+      }
       toast.success('Symptoms logged!')
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Failed to log symptoms')

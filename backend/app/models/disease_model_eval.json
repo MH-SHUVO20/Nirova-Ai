@@ -1,0 +1,30 @@
+{
+  "model_name": "disease_classifier",
+  "dataset": "itachi9604/disease-symptom-description-dataset",
+  "n_diseases": 41,
+  "n_symptoms": 131,
+  "n_original_samples": 4920,
+  "n_augmented_samples": 24600,
+  "noise_levels_used": [
+    0.08,
+    0.12,
+    0.18,
+    0.25
+  ],
+  "regularization": {
+    "max_depth": 4,
+    "min_child_weight": 5,
+    "gamma": 0.3,
+    "reg_alpha": 1.0,
+    "reg_lambda": 3.0
+  },
+  
+  "cv_std": 0.0,
+  "cv_fold_scores": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ]
+}

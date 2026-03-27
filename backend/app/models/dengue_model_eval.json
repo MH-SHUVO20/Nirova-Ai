@@ -1,0 +1,35 @@
+{
+  "model_name": "dengue_classifier",
+  "dataset": "kawsarahmad/dengue-dataset-bangladesh",
+  "type": "Binary \u2014 Dengue Positive / Dengue Negative",
+  "real_bd_hospital_data": true,
+  "n_original_samples": 1000,
+  "n_augmented_samples": 5000,
+  "n_features": 9,
+  "feature_names": [
+    "Gender",
+    "Age",
+    "NS1",
+    "IgG",
+    "IgM",
+    "Area",
+    "AreaType",
+    "HouseType",
+    "District"
+  ],
+  "class_names": [
+    "Dengue Negative",
+    "Dengue Positive"
+  ],
+  
+  "confusion_matrix": [
+    [
+      406,
+      61
+    ],
+    [
+      48,
+      485
+    ]
+  ]
+}

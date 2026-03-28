@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { FiLock, FiArrowLeft, FiCheckCircle, FiLoader } from 'react-icons/fi'
-import { authAPI } from '../utils/api'
+import { authAPI, extractErrorMessage } from '../utils/api'
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -27,8 +27,8 @@ export default function ResetPasswordPage() {
       toast.error('Reset token is required')
       return
     }
-    if (newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters')
+    if (newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters')
       return
     }
     if (newPassword !== confirmPassword) {
@@ -43,14 +43,14 @@ export default function ResetPasswordPage() {
       toast.success('Password updated successfully')
       setTimeout(() => navigate('/login', { replace: true }), 1000)
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Could not reset password')
+      toast.error(extractErrorMessage(err) || 'Could not reset password')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#0a1628] flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-app flex items-center justify-center px-4 py-8">
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary-600/8 rounded-full blur-3xl" />
       </div>
@@ -63,8 +63,8 @@ export default function ResetPasswordPage() {
             </div>
             <span className="font-display font-bold text-white text-2xl">NirovaAI</span>
           </Link>
-          <h2 className="font-display text-3xl font-bold text-white">Set new password</h2>
-          <p className="text-slate-400 mt-2">
+          <h2 className="font-display text-3xl font-bold text-theme">Set new password</h2>
+          <p className="text-theme-muted mt-2">
             {emailHint ? `Resetting password for ${emailHint}` : 'Enter your token and new password'}
           </p>
         </div>
@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Reset token</label>
+                <label className="block text-sm font-medium text-theme mb-2">Reset token</label>
                 <input
                   type="text"
                   value={token}
@@ -90,14 +90,14 @@ export default function ResetPasswordPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">New password</label>
+                <label className="block text-sm font-medium text-theme mb-2">New password</label>
                 <div className="relative">
-                  <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-muted" size={16} />
                   <input
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Minimum 6 characters"
+                    placeholder="Minimum 8 characters"
                     className="input-field pl-11"
                     required
                   />
@@ -105,9 +105,9 @@ export default function ResetPasswordPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Confirm password</label>
+                <label className="block text-sm font-medium text-theme mb-2">Confirm password</label>
                 <div className="relative">
-                  <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-muted" size={16} />
                   <input
                     type="password"
                     value={confirmPassword}
@@ -136,7 +136,7 @@ export default function ResetPasswordPage() {
             </form>
           )}
 
-          <p className="text-center text-slate-400 text-sm">
+          <p className="text-center text-theme-muted text-sm">
             <Link to="/login" className="inline-flex items-center gap-2 text-primary-400 hover:text-primary-300 font-medium">
               <FiArrowLeft size={14} /> Back to sign in
             </Link>

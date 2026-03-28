@@ -1,9 +1,11 @@
 # NirovaAI Backend - Main Application Entry Point
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import logging
+import time
 
 from app.core.config import settings
 from app.core.database import connect_db, disconnect_db
@@ -12,8 +14,15 @@ from app.ai.ml.disease_model import load_disease_model
 from app.ai.ml.dengue_model import load_dengue_model
 from app.ai.vision.skin_model import load_skin_model
 from app.ai.rag.embedder import load_embedder
+from app.core.errors import (
+    NirovaError,
+    RequestLogger,
+    http_exception,
+    DatabaseError,
+    AIProviderError,
+)
 
-from app.api import auth, symptoms, chat, health, vision
+from app.api import auth, symptoms, chat, health, vision, language, analytics
 
 from app.core.rate_limit import limiter
 from slowapi import _rate_limit_exceeded_handler
@@ -137,6 +146,59 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Structured Request/Response Logging Middleware ──
+@app.middleware("http")
+async def add_request_logging_middleware(request: Request, call_next):
+    """Log all requests and responses with timing."""
+    start_time = time.time()
+    user_id = None
+    
+    # Try to extract user ID from token
+    try:
+        from app.core.auth import decode_token
+        token = request.cookies.get(settings.AUTH_COOKIE_NAME)
+        if token:
+            payload = decode_token(token)
+            user_id = payload.get("sub")
+    except Exception:
+        pass  # User not authenticated, that's OK
+    
+    # Log incoming request
+    RequestLogger.log_request(
+        method=request.method,
+        path=request.url.path,
+        user_id=user_id,
+    )
+    
+    try:
+        response = await call_next(request)
+        duration_ms = (time.time() - start_time) * 1000
+        
+        # Log response
+        RequestLogger.log_response(
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            duration_ms=duration_ms,
+            user_id=user_id,
+        )
+        
+        return response
+    except Exception as exc:
+        duration_ms = (time.time() - start_time) * 1000
+        log.error(f"Unhandled exception after {duration_ms:.1f}ms: {exc}")
+        raise
+
+# Exception handlers for custom errors
+@app.exception_handler(NirovaError)
+async def nirova_error_handler(request: Request, exc: NirovaError):
+    """Handle all NirovaAI custom errors."""
+    RequestLogger.log_error(exc, request.url.path)
+    return JSONResponse(
+        status_code=exc.http_status,
+        content={"error": True, "code": exc.error_code, "message": exc.user_message},
+    )
+
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -146,6 +208,8 @@ app.include_router(symptoms.router)
 app.include_router(chat.router)
 app.include_router(health.router)
 app.include_router(vision.router)
+app.include_router(language.router)
+app.include_router(analytics.router)
 
 @app.get("/", tags=["Status"])
 async def home():

@@ -1,8 +1,12 @@
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
-// Use relative API path /api by default, which maps to Vite proxy in dev
-const BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const envBaseUrl = (import.meta.env.VITE_API_URL || '').trim()
+const localHosts = new Set(['localhost', '127.0.0.1', '0.0.0.0'])
+const runningLocally = typeof window !== 'undefined' && localHosts.has(window.location.hostname)
+
+// In local dev, force same-origin /api to keep auth cookies first-party.
+const BASE_URL = runningLocally ? '/api' : (envBaseUrl || '/api')
 const isAuthEndpoint = (url = '') => {
   return typeof url === 'string' && url.startsWith('/auth/')
 }
@@ -13,18 +17,51 @@ const api = axios.create({
   withCredentials: true,
 })
 
+const extractErrorMessage = (error) => {
+  const detail = error?.response?.data?.detail
+  if (Array.isArray(detail) && detail.length > 0) {
+    const first = detail[0]
+    return first?.msg || first?.message || 'Invalid request data.'
+  }
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail
+  }
+  return null
+}
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
 api.interceptors.request.use((config) => {
   return config
 })
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const config = error.config || {}
+    const status = error.response?.status
+    const method = (config.method || '').toLowerCase()
+
+    // Auto-retry idempotent startup requests so pages don't appear empty
+    // when backend is warming/reloading.
+    const shouldRetry =
+      method === 'get' &&
+      !isAuthEndpoint(config.url) &&
+      (error.code === 'ECONNABORTED' || !error.response || [502, 503, 504].includes(status))
+
+    if (shouldRetry) {
+      config.__retryCount = config.__retryCount || 0
+      if (config.__retryCount < 2) {
+        config.__retryCount += 1
+        await wait(500 * config.__retryCount)
+        return api(config)
+      }
+    }
+
     if (error.config?.silent) {
       return Promise.reject(error)
     }
 
-    const status = error.response?.status
     const isAuth = isAuthEndpoint(error.config?.url)
 
     // Auth screens handle their own errors; avoid duplicate global toasts.
@@ -39,14 +76,19 @@ api.interceptors.response.use(
       toast.error('A server error occurred. Please try again later.')
     } else if (error.code === 'ECONNABORTED') {
       toast.error('Request timed out. AI analysis may take longer; please try again.')
-    } else if (error.response?.data?.detail) {
-      toast.error(error.response.data.detail)
     } else {
-      toast.error('An unexpected error occurred.')
+      const message = extractErrorMessage(error)
+      if (message) {
+        toast.error(message)
+      } else {
+        toast.error('An unexpected error occurred.')
+      }
     }
     return Promise.reject(error)
   }
 )
+
+export { extractErrorMessage }
 
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
@@ -54,6 +96,7 @@ export const authAPI = {
   getMe:    ()     => api.get('/auth/me'),
   health:   ()     => api.get('/auth/health'),
   logout:   ()     => api.post('/auth/logout'),
+  logoutCleanup: () => api.post('/chat/logout-cleanup'),
   forgotPassword: (data) => api.post('/auth/forgot-password', data),
   resetPassword: (data) => api.post('/auth/reset-password', data),
 }
@@ -64,11 +107,15 @@ export const symptomsAPI = {
   predictDengue: (data) => api.post('/symptoms/predict-dengue', data),
   history: (limit = 30) => api.get(`/symptoms/history?limit=${limit}`),
   latest:  () => api.get('/symptoms/latest'),
+  getExcludedDiseases: () => api.get('/symptoms/excluded-diseases', { silent: true }),
+  addExcludedDisease: (disease) => api.post('/symptoms/excluded-diseases', { disease }),
+  removeExcludedDisease: (disease) => api.delete(`/symptoms/excluded-diseases/${encodeURIComponent(disease)}`),
 }
 
 export const chatAPI = {
   ask: (data) => api.post('/chat/ask', data),
-  history: (limit = 10) => api.get(`/chat/history?limit=${limit}`),
+  history: (limit = 10, agent_mode = 'chat') =>
+    api.get(`/chat/history?limit=${limit}&agent_mode=${encodeURIComponent(agent_mode)}`),
   contextPreview: (agentMode = 'general') => api.get(
     `/chat/context-preview?agent_mode=${encodeURIComponent(agentMode)}`,
     { silent: true }
@@ -86,7 +133,7 @@ export const visionAPI = {
   analyzeSkin: (file) => {
     const form = new FormData()
     form.append('file', file)
-    return api.post('/vision/analyze-skin', form, {
+    return api.post('/vision/skin', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 60000
     })
@@ -94,7 +141,7 @@ export const visionAPI = {
   analyzeLab: (file) => {
     const form = new FormData()
     form.append('file', file)
-    return api.post('/vision/analyze-lab', form, {
+    return api.post('/vision/lab-report', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 60000
     })
@@ -102,7 +149,7 @@ export const visionAPI = {
   analyzePrescription: (file) => {
     const form = new FormData()
     form.append('file', file)
-    return api.post('/vision/analyze-prescription', form, {
+    return api.post('/vision/prescription', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 60000
     })

@@ -68,10 +68,24 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
+      await authAPI.logoutCleanup()
       await authAPI.logout()
     } catch(e) {
-      toast.error('Logout failed. Please try again.')
+      toast.error('Logout had partial issues. Local session was cleared.')
     }
+
+    // Destroy all local and session chat/context caches for a fresh next login.
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('nirovaai_')) {
+        localStorage.removeItem(key)
+      }
+    })
+    Object.keys(sessionStorage).forEach((key) => {
+      if (key.startsWith('nirovaai_')) {
+        sessionStorage.removeItem(key)
+      }
+    })
+
     localStorage.removeItem('nirovaai_user')
     setUser(null)
     window.location.href = '/login'

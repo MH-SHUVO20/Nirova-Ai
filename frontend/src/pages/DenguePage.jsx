@@ -71,11 +71,27 @@ export default function DenguePage() {
         age: user?.age || null,
         district: user?.district || null,
       })
-      setResult(res.data?.prediction?.dengue_prediction || null)
+      const dengueResponse = res.data?.prediction?.dengue_prediction || {}
+      
+      // Map backend fields to frontend expected format
+      const mappedResult = {
+        predicted_class: dengueResponse.result || 'Unknown',
+        confidence: dengueResponse.probability || 0,
+        recommendation: dengueResponse.recommended_action || 'Monitor closely and consult clinician if symptoms worsen.',
+        urgency: dengueResponse.urgency,
+        is_dengue_positive: dengueResponse.is_dengue_positive,
+      }
+      
+      setResult(mappedResult)
+      const p = mappedResult
+      const summary = [
+        p.predicted_class ? `dengue=${p.predicted_class}` : '',
+        typeof p.confidence === 'number' ? `confidence=${Math.round(p.confidence * 100)}%` : '',
+        p.recommendation ? `recommendation=${p.recommendation}` : '',
+      ].filter(Boolean).join(', ')
+      window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'dengue', summary } }))
       if (res.data?.context_saved === false) {
         toast.error('Prediction done, but context was not saved to database.')
-      } else {
-        window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'dengue' } }))
       }
       toast.success('Dengue prediction ready')
     } catch (err) {
@@ -180,7 +196,6 @@ export default function DenguePage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-lg font-semibold">{result.predicted_class || 'Unknown'}</p>
-                    <p className="text-xs opacity-80 mt-1">Model: {result.model || 'N/A'}</p>
                   </div>
                   <div className="text-2xl font-bold">{Math.round((result.confidence || 0) * 100)}%</div>
                 </div>
@@ -225,3 +240,4 @@ export default function DenguePage() {
     </div>
   )
 }
+

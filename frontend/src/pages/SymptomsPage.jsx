@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FiPhoneCall, FiMapPin } from 'react-icons/fi'
-import { symptomsAPI } from '../utils/api'
+import { extractErrorMessage, symptomsAPI } from '../utils/api'
 import toast from 'react-hot-toast'
 import { FiPlus, FiX, FiLoader, FiAlertTriangle, FiCheckCircle, FiActivity } from 'react-icons/fi'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -28,6 +28,19 @@ export default function SymptomsPage() {
   const [notes, setNotes]         = useState('')
   const [loading, setLoading]     = useState(false)
   const [result, setResult]       = useState(null)
+  const [excludedDiseases, setExcludedDiseases] = useState([])
+  const [excludeInput, setExcludeInput] = useState('')
+
+  useEffect(() => {
+    symptomsAPI.getExcludedDiseases()
+      .then((res) => {
+        const items = res?.data?.excluded_diseases
+        setExcludedDiseases(Array.isArray(items) ? items : [])
+      })
+      .catch(() => {
+        setExcludedDiseases([])
+      })
+  }, [])
 
   const addSymptom = (symptom) => {
     const clean = symptom.toLowerCase().replace(/\s+/g, '_')
@@ -52,16 +65,48 @@ export default function SymptomsPage() {
     try {
       const res = await symptomsAPI.log({ symptoms: selected, severity, notes })
       setResult(res.data)
+      const p = res.data?.prediction || {}
+      const summary = [
+        p.predicted_disease ? `disease=${p.predicted_disease}` : '',
+        typeof p.confidence === 'number' ? `confidence=${Math.round(p.confidence * 100)}%` : '',
+        p.triage_color ? `triage=${p.triage_color}` : '',
+        selected.length ? `symptoms=${selected.slice(0, 5).join(',')}` : '',
+      ].filter(Boolean).join(', ')
+      window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'symptoms', summary } }))
       if (res.data?.context_saved === false) {
         toast.error('Symptoms analyzed, but context was not saved to database.')
-      } else {
-        window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'symptoms' } }))
       }
       toast.success('Symptoms logged!')
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Failed to log symptoms')
+      const message = extractErrorMessage(err)
+      toast.error(message || 'Failed to log symptoms')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const addExcludedDisease = async () => {
+    const value = excludeInput.trim()
+    if (!value) return
+    try {
+      const res = await symptomsAPI.addExcludedDisease(value)
+      const items = res?.data?.excluded_diseases
+      setExcludedDiseases(Array.isArray(items) ? items : excludedDiseases)
+      setExcludeInput('')
+      toast.success('Disease removed from prediction list')
+    } catch (err) {
+      toast.error(extractErrorMessage(err) || 'Failed to update removed diseases')
+    }
+  }
+
+  const removeExcludedDisease = async (disease) => {
+    try {
+      const res = await symptomsAPI.removeExcludedDisease(disease)
+      const items = res?.data?.excluded_diseases
+      setExcludedDiseases(Array.isArray(items) ? items : excludedDiseases.filter((d) => d !== disease))
+      toast.success('Disease added back to predictions')
+    } catch (err) {
+      toast.error(extractErrorMessage(err) || 'Failed to restore disease')
     }
   }
 
@@ -103,12 +148,12 @@ export default function SymptomsPage() {
           <FiActivity className="text-primary-400" />
           Log Today's Symptoms
         </h1>
-        <p className="text-slate-400">Select your symptoms to generate a risk-oriented clinical guidance summary.</p>
+        <p className="text-theme-muted">Select your symptoms to generate a risk-oriented clinical guidance summary.</p>
       </div>
 
       {/* Common symptoms grid */}
       <div className="card mb-5">
-        <h3 className="text-sm font-semibold text-slate-300 mb-3">Common symptoms (select as applicable)</h3>
+        <h3 className="text-sm font-semibold text-theme mb-3">Common symptoms (select as applicable)</h3>
         <div className="flex flex-wrap gap-2">
           {COMMON_SYMPTOMS.map(s => (
             <button key={s} onClick={() => addSymptom(s)}
@@ -125,7 +170,7 @@ export default function SymptomsPage() {
 
       {/* Custom symptom input */}
       <div className="card mb-5">
-        <h3 className="text-sm font-semibold text-slate-300 mb-3">Add another symptom</h3>
+        <h3 className="text-sm font-semibold text-theme mb-3">Add another symptom</h3>
         <div className="flex gap-2">
           <input
             value={custom}
@@ -143,7 +188,7 @@ export default function SymptomsPage() {
       {/* Selected symptoms */}
       {selected.length > 0 && (
         <div className="card mb-5">
-          <h3 className="text-sm font-semibold text-slate-300 mb-3">
+          <h3 className="text-sm font-semibold text-theme mb-3">
             Selected Symptoms ({selected.length})
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -171,7 +216,7 @@ export default function SymptomsPage() {
       {/* Severity slider */}
       <div className="card mb-5">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-slate-300">Overall Severity</h3>
+          <h3 className="text-sm font-semibold text-theme">Overall Severity</h3>
           <span className={`font-mono font-bold text-lg ${
             severity >= 8 ? 'text-red-400' : severity >= 5 ? 'text-amber-400' : 'text-green-400'
           }`}>{severity}/10</span>
@@ -180,19 +225,47 @@ export default function SymptomsPage() {
           onChange={e => setSeverity(parseInt(e.target.value))}
           className="w-full accent-primary-500 cursor-pointer"
         />
-        <div className="flex justify-between text-xs text-slate-500 mt-1">
+        <div className="flex justify-between text-xs text-theme-muted mt-1">
           <span>Mild</span><span>Moderate</span><span>Severe</span>
         </div>
       </div>
 
       {/* Notes */}
       <div className="card mb-6">
-        <h3 className="text-sm font-semibold text-slate-300 mb-3">Additional Notes (optional)</h3>
+        <h3 className="text-sm font-semibold text-theme mb-3">Additional Notes (optional)</h3>
         <textarea value={notes} onChange={e => setNotes(e.target.value)}
           placeholder="Any other observations..."
           rows={3}
           className="input-field resize-none"
         />
+      </div>
+
+      {/* Removed diseases preferences */}
+      <div className="card mb-6">
+        <h3 className="text-sm font-semibold text-theme mb-3">Remove Diseases From Prediction List</h3>
+        <p className="text-theme-muted text-xs mb-3">Diseases added here will be excluded from symptom prediction results.</p>
+        <div className="flex gap-2 mb-3">
+          <input
+            value={excludeInput}
+            onChange={(e) => setExcludeInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addExcludedDisease()}
+            placeholder="e.g. common cold"
+            className="input-field flex-1"
+          />
+          <button onClick={addExcludedDisease} className="btn-primary px-4">Remove</button>
+        </div>
+        {excludedDiseases.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {excludedDiseases.map((disease) => (
+              <span key={disease} className="flex items-center gap-1.5 bg-slate-700 text-slate-200 px-3 py-1.5 rounded-full text-sm">
+                {disease}
+                <button onClick={() => removeExcludedDisease(disease)} className="text-slate-300 hover:text-white" title="Add back to predictions">
+                  <FiX size={12} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Submit button */}
@@ -217,13 +290,13 @@ export default function SymptomsPage() {
               <cfg.icon className={cfg.text} size={22} />
               <div>
                 <span className={`font-semibold ${cfg.text}`}>{cfg.label}</span>
-                <span className="text-slate-500 text-sm ml-2">— {result.prediction?.model}</span>
+                
               </div>
             </div>
 
             <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-slate-400 text-sm mb-1">Predicted Condition</p>
+                <p className="text-theme-muted text-sm mb-1">Predicted Condition</p>
                 <p className="font-display text-2xl font-bold text-white">
                   {result.prediction?.predicted_disease}
                 </p>
@@ -242,7 +315,7 @@ export default function SymptomsPage() {
             {/* Top 3 */}
             {result.prediction?.top3_predictions?.length > 0 && (
               <div>
-                <p className="text-slate-400 text-xs mb-2">Other possibilities</p>
+                <p className="text-theme-muted text-xs mb-2">Other possibilities</p>
                 <div className="space-y-2">
                   {result.prediction.top3_predictions.slice(1).map((p, i) => (
                     <div key={i} className="flex items-center justify-between">
@@ -262,7 +335,7 @@ export default function SymptomsPage() {
               </div>
             )}
 
-            <p className="text-slate-500 text-xs mt-4 italic">
+            <p className="text-theme-muted text-xs mt-4 italic">
               Disclaimer: এই সেবা কেবল তথ্যগত সহায়তা দেয়; এটি নিবন্ধিত চিকিৎসকের পরামর্শ, রোগ নির্ণয় বা চিকিৎসার বিকল্প নয়।
             </p>
           </motion.div>
@@ -272,3 +345,4 @@ export default function SymptomsPage() {
     </div>
   )
 }
+

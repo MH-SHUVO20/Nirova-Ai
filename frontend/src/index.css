@@ -2,6 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+:root,
+.theme-light {
+  --bg-main: #f3f7fb;
+  --bg-gradient-a: rgba(13, 148, 136, 0.09);
+  --bg-gradient-b: rgba(14, 116, 144, 0.07);
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-elev: #ffffff;
+  --surface-soft: rgba(148, 163, 184, 0.45);
+  --header-surface: rgba(255, 255, 255, 0.86);
+  --border-color: rgba(30, 41, 59, 0.12);
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --shadow-soft: 0 12px 36px rgba(15, 23, 42, 0.08);
+}
+
+.theme-dark {
+  --bg-main: #0a1628;
+  --bg-gradient-a: rgba(13, 148, 136, 0.16);
+  --bg-gradient-b: rgba(76, 29, 149, 0.12);
+  --surface: rgba(15, 23, 42, 0.72);
+  --surface-elev: #111c31;
+  --surface-soft: rgba(51, 65, 85, 0.55);
+  --header-surface: rgba(10, 22, 40, 0.84);
+  --border-color: rgba(148, 163, 184, 0.24);
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --shadow-soft: 0 18px 44px rgba(2, 6, 23, 0.42);
+}
+
 @layer base {
   html, body, #root {
     min-height: 100%;
@@ -14,12 +43,19 @@
   body {
     margin: 0;
     font-family: 'DM Sans', sans-serif;
-    background-color: #0a1628;
-    color: #e2e8f0;
+    background-color: var(--bg-main);
+    background-image: radial-gradient(circle at 0% 0%, var(--bg-gradient-a), transparent 34%),
+      radial-gradient(circle at 100% 0%, var(--bg-gradient-b), transparent 32%);
+    color: var(--text-main);
     line-height: 1.5;
     overflow-x: hidden;
+    transition: background-color 0.28s ease, color 0.28s ease;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+
+  a {
+    color: inherit;
   }
 
   h1, h2, h3, h4, h5 {
@@ -32,36 +68,155 @@
 }
 
 @layer components {
+  .bg-app {
+    background-color: var(--bg-main);
+    background-image: radial-gradient(circle at 0% 0%, var(--bg-gradient-a), transparent 34%),
+      radial-gradient(circle at 100% 0%, var(--bg-gradient-b), transparent 32%);
+  }
+
+  .surface-panel {
+    background: var(--surface);
+    backdrop-filter: blur(14px);
+  }
+
+  .bg-theme-soft {
+    background-color: var(--surface-soft);
+  }
+
+  .bg-theme-header {
+    background-color: var(--header-surface);
+  }
+
+  .text-theme {
+    color: var(--text-main);
+  }
+
+  .text-theme-muted {
+    color: var(--text-muted);
+  }
+
+  .border-theme {
+    border-color: var(--border-color);
+  }
+
+  /* Theme-aware text colors */
+  .text-slate-200 {
+    color: var(--text-main);
+  }
+
+  .text-slate-300 {
+    color: var(--text-main);
+  }
+
+  .text-slate-400 {
+    color: var(--text-muted);
+  }
+
+  .text-slate-500 {
+    color: var(--text-muted);
+  }
+
+  .text-slate-600 {
+    color: var(--text-muted);
+  }
+
+  .text-slate-700 {
+    color: var(--text-main);
+  }
+
+  /* Theme-aware background colors */
+  .bg-slate-700 {
+    background-color: var(--surface-soft);
+  }
+
+  .bg-slate-800,
+  .bg-slate-900 {
+    background-color: var(--surface);
+  }
+
+  .bg-slate-800\/50,
+  .bg-slate-900\/50,
+  .bg-slate-900\/60 {
+    background-color: var(--surface-soft);
+  }
+
+  /* Theme-aware border colors */
+  .border-slate-600,
+  .border-slate-700 {
+    border-color: var(--border-color);
+  }
+
+  /* Icon colors */
+  .text-slate-500 svg {
+    color: var(--text-muted);
+  }
+
   /* Card component */
   .card {
-    @apply bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6;
+    background: var(--surface);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-soft);
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
   }
 
   .card-hover {
-    @apply card transition-all duration-300 hover:border-primary-500/50 hover:bg-slate-800/80 hover:-translate-y-1;
+    @apply card transition-all duration-300 hover:-translate-y-1;
+    border-color: rgba(13, 148, 136, 0.2);
+  }
+
+  .card-hover:hover {
+    background: var(--surface-elev);
+    border-color: rgba(13, 148, 136, 0.45);
   }
 
   /* Button variants */
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-500 text-white font-semibold py-3 px-6 rounded-xl
-           transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #0d9488, #0f766e);
+    box-shadow: 0 10px 20px rgba(13, 148, 136, 0.25);
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 12px 24px rgba(13, 148, 136, 0.33);
   }
 
   .btn-secondary {
-    @apply bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 px-6 rounded-xl
-           transition-all duration-200 active:scale-95;
+    @apply font-medium py-3 px-6 rounded-xl transition-all duration-200 active:scale-95;
+    background: var(--surface-soft);
+    color: var(--text-main);
   }
 
   .btn-outline {
-    @apply border border-primary-500/50 hover:bg-primary-500/10 text-primary-400
-           font-medium py-3 px-6 rounded-xl transition-all duration-200;
+    @apply border font-medium py-3 px-6 rounded-xl transition-all duration-200;
+    border-color: rgba(13, 148, 136, 0.45);
+    color: #0d9488;
+    background: transparent;
+  }
+
+  .btn-outline:hover {
+    background-color: rgba(13, 148, 136, 0.1);
   }
 
   /* Input fields */
   .input-field {
-    @apply w-full bg-slate-700/50 border border-slate-600 rounded-xl px-4 py-3
-           text-white placeholder-slate-400 focus:outline-none focus:border-primary-500
-           focus:bg-slate-700 transition-all duration-200;
+    @apply w-full rounded-xl px-4 py-3 focus:outline-none transition-all duration-200;
+    background: var(--surface-elev);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+  }
+
+  .input-field::placeholder {
+    color: var(--text-muted);
+  }
+
+  .input-field:focus {
+    border-color: rgba(13, 148, 136, 0.7);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
   }
 
   /* Triage colors */
@@ -71,19 +226,60 @@
 
   /* Symptom tag */
   .symptom-tag {
-    @apply bg-primary-500/20 text-primary-300 border border-primary-500/30
+    @apply bg-primary-500/20 text-primary-600 border border-primary-500/30
            px-3 py-1 rounded-full text-sm font-medium;
   }
 
   /* Section heading */
   .section-title {
-    @apply font-display text-2xl font-bold text-white mb-6;
+    @apply font-display text-2xl font-bold mb-6;
+    color: var(--text-main);
   }
 
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: #1e293b; }
+  ::-webkit-scrollbar-track { background: rgba(148, 163, 184, 0.24); }
   ::-webkit-scrollbar-thumb { background: #0d9488; border-radius: 3px; }
+}
+
+/* Improve readability for existing dark-first utility usage in light mode. */
+.theme-light .text-white { color: var(--text-main) !important; }
+.theme-light .text-slate-200,
+.theme-light .text-slate-300,
+.theme-light .text-slate-400,
+.theme-light .text-slate-500,
+.theme-light .text-slate-600 { color: var(--text-muted) !important; }
+
+.theme-light .text-cyan-300 { color: #0891b2 !important; }
+.theme-light .text-primary-200 { color: var(--text-main) !important; }
+.theme-light .text-primary-300 { color: #0d9488 !important; }
+.theme-light .text-primary-400 { color: #0d9488 !important; }
+
+.theme-light .bg-primary-500\/10 { background-color: rgba(13, 148, 136, 0.15) !important; }
+.theme-light .border-primary-500\/30 { border-color: rgba(13, 148, 136, 0.4) !important; }
+.theme-light .text-amber-100, .theme-light .text-amber-200, .theme-light .text-amber-300 { color: #d97706 !important; }
+.theme-light .text-emerald-200, .theme-light .text-green-200, .theme-light .text-green-300 { color: #059669 !important; }
+.theme-light .text-red-200, .theme-light .text-red-300 { color: #dc2626 !important; }
+.theme-light .bg-slate-800,
+.theme-light .bg-slate-700,
+.theme-light .bg-slate-800\/50,
+.theme-light .bg-slate-800\/60,
+.theme-light .bg-slate-900\/80,
+.theme-light .bg-slate-700\/50 {
+  background-color: var(--surface) !important;
+}
+
+.theme-light .border-slate-700,
+.theme-light .border-slate-700\/50,
+.theme-light .border-slate-600,
+.theme-light .border-slate-800 {
+  border-color: var(--border-color) !important;
+}
+
+.theme-light .shadow-2xl,
+.theme-light .shadow-xl,
+.theme-light .shadow-lg {
+  box-shadow: var(--shadow-soft) !important;
 }
 
 /* Chat message animations */

@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     PASSWORD_RESET_EXPIRE_MINUTES: int = 20
     PASSWORD_RESET_PATH: str = "/reset-password"
     ENABLE_RESET_TOKEN_PREVIEW: bool = False
+    ALLOW_PASSWORD_RESET_KBA_FALLBACK: bool = False
     FORGOT_PASSWORD_EMAIL_LIMIT_PER_HOUR: int = 5
     FORGOT_PASSWORD_IP_LIMIT_PER_HOUR: int = 20
     RESET_PASSWORD_IP_LIMIT_PER_HOUR: int = 30
@@ -65,6 +66,10 @@ class Settings(BaseSettings):
     HF_TIMEOUT_SECONDS: int = 45
     LLM_ROUTING_MODE: str = "auto"  # auto|cloud_first|local_first|local_only
     LLM_PROVIDER_COOLDOWN_SECONDS: int = 600
+    RAG_TOP_K: int = 4
+    RAG_CANDIDATE_LIMIT: int = 30
+    RAG_KB_MAX_CHARS: int = 2800
+    CHAT_ORCHESTRATION_MODE: str = "langgraph"  # langgraph|classic
 
     # Startup behavior
     # Preloading embeddings can download large model files on first run.

@@ -3,6 +3,8 @@ import toast from 'react-hot-toast'
 import { createChatSocket, chatAPI } from '../utils/api'
 import { FiSend, FiLoader, FiMessageCircle, FiUser } from 'react-icons/fi'
 import { motion, AnimatePresence } from 'framer-motion'
+import LanguageSelector from '../components/LanguageSelector'
+import { useLanguage } from '../context/LanguageContext'
 
 const SUGGESTIONS = [
   'I have high fever and joint pain for 3 days.',
@@ -11,6 +13,33 @@ const SUGGESTIONS = [
   'How can I differentiate dengue and typhoid symptoms?',
   'When should I go to the hospital urgently?',
 ]
+
+const LATEST_CONTEXT_KEY = 'nirovaai_latest_context'
+
+function readLatestContextMap() {
+  try {
+    const raw = sessionStorage.getItem(LATEST_CONTEXT_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeLatestContextMap(map) {
+  sessionStorage.setItem(LATEST_CONTEXT_KEY, JSON.stringify(map))
+}
+
+function normalizeAssistantText(text) {
+  let out = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  out = out.replace(/\*\*/g, '').replace(/__/g, '')
+  out = out.replace(/\s+([1-4]\)\s*(Summary|What To Do Now|Red Flags|Follow-?Up))/gi, '\n$1')
+  out = out.replace(/([1-4]\)\s*(Summary|What To Do Now|Red Flags|Follow-?Up))\s*\*\s*/gi, '$1\n- ')
+  out = out.replace(/\s+\*\s+/g, '\n- ')
+  out = out.replace(/\n{3,}/g, '\n\n').trim()
+  return out
+}
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([
@@ -25,9 +54,10 @@ export default function ChatPage() {
   const socketRef    = useRef(null)
   const messagesEnd  = useRef(null)
   const inputRef     = useRef(null)
+  const [clientContext, setClientContext] = useState('')
 
   useEffect(() => {
-    chatAPI.history(1).then((res) => {
+    chatAPI.history(1, 'chat').then((res) => {
       const latestSession = res.data[0]
       if (latestSession && latestSession.messages?.length > 0) {
         setSessionId(latestSession.session_id)
@@ -45,8 +75,31 @@ export default function ChatPage() {
   }, [])
 
   useEffect(() => {
+    const map = readLatestContextMap()
+    const all = Object.values(map).filter(Boolean)
+    setClientContext(all.join(' | '))
+  }, [])
+
+  useEffect(() => {
+    const onAnalysisUpdated = (evt) => {
+      const detailSummary = evt?.detail?.summary
+      const detailType = evt?.detail?.type || 'general'
+      if (typeof detailSummary !== 'string' || !detailSummary.trim()) return
+      const map = readLatestContextMap()
+      map[detailType] = detailSummary.trim()
+      writeLatestContextMap(map)
+      const all = Object.values(map).filter(Boolean)
+      setClientContext(all.join(' | '))
+    }
+    window.addEventListener('nirovaai:analysis-updated', onAnalysisUpdated)
+    return () => window.removeEventListener('nirovaai:analysis-updated', onAnalysisUpdated)
+  }, [])
+
+  useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  const { language } = useLanguage()
 
   const sendMessage = async (text) => {
     const message = (text || input).trim()
@@ -64,7 +117,13 @@ export default function ChatPage() {
       socketRef.current = socket
 
       socket.onopen = () => {
-        socket.send(JSON.stringify({ message, session_id: sessionId }))
+        socket.send(JSON.stringify({ 
+          message, 
+          session_id: sessionId, 
+          agent_mode: 'chat', 
+          client_context: clientContext,
+          language: language === 'bn' ? 'bn' : 'en'
+        }))
       }
 
       socket.onmessage = (event) => {
@@ -87,7 +146,8 @@ export default function ChatPage() {
             const updated = [...prev]
             updated[updated.length - 1] = {
               ...updated[updated.length - 1],
-              isStreaming: false
+              isStreaming: false,
+              content: data.formatted_response || updated[updated.length - 1].content
             }
             return updated
           })
@@ -120,7 +180,7 @@ export default function ChatPage() {
   const fallbackToRest = async (message) => {
     try {
       const { chatAPI } = await import('../utils/api')
-      const res = await chatAPI.ask({ message, session_id: sessionId })
+      const res = await chatAPI.ask({ message, session_id: sessionId, agent_mode: 'chat', client_context: clientContext })
       setMessages(prev => {
         const updated = [...prev]
         updated[updated.length - 1] = {
@@ -150,14 +210,17 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] animate-fade-in">
       {/* Header */}
-      <div className="mb-4">
-        <h1 className="section-title flex items-center gap-3 mb-1">
-          <FiMessageCircle className="text-primary-400" />
-          AI Health Assistant
-        </h1>
-        <p className="text-slate-400 text-sm">
-          Describe your symptoms or ask any health-related questions.
-        </p>
+      <div className="mb-4 flex items-start justify-between">
+        <div className="flex-1">
+          <h1 className="section-title flex items-center gap-3 mb-1">
+            <FiMessageCircle className="text-primary-400" />
+            AI Health Assistant
+          </h1>
+          <p className="text-theme-muted text-sm">
+            Describe your symptoms or ask any health-related questions.
+          </p>
+        </div>
+        <LanguageSelector />
       </div>
 
       {/* Messages */}
@@ -174,7 +237,7 @@ export default function ChatPage() {
               <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${
                 msg.role === 'user'
                   ? 'bg-primary-600'
-                  : 'bg-slate-700 border border-slate-600'
+                  : 'bg-theme-soft border border-theme'
               }`}>
                 {msg.role === 'user'
                   ? <FiUser size={14} className="text-white" />
@@ -188,9 +251,11 @@ export default function ChatPage() {
                   ? 'bg-primary-600 text-white rounded-tr-sm'
                   : msg.isError
                     ? 'bg-red-500/10 border border-red-500/30 text-red-300 rounded-tl-sm'
-                    : 'bg-slate-800 border border-slate-700 text-slate-200 rounded-tl-sm'
+                    : 'bg-theme-soft border border-theme text-theme rounded-tl-sm'
               }`}>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {msg.role === 'assistant' && !msg.isError ? normalizeAssistantText(msg.content) : msg.content}
+                </p>
                 {msg.isStreaming && (
                   <span className="inline-flex gap-0.5 ml-1 mt-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary-400 dot-1" />
@@ -210,7 +275,7 @@ export default function ChatPage() {
         <div className="flex flex-wrap gap-2 mb-4">
           {SUGGESTIONS.map(s => (
             <button key={s} onClick={() => sendMessage(s)}
-              className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs px-3 py-2 rounded-xl transition-all">
+              className="bg-theme-soft hover:bg-theme-soft/70 border border-theme text-theme text-xs px-3 py-2 rounded-xl transition-all">
               {s}
             </button>
           ))}

@@ -26,10 +26,10 @@ function PrivateRoute({ children }) {
 
 function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+    <div className="min-h-screen bg-app flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 rounded-full border-2 border-primary-500/30 border-t-primary-500 animate-spin" />
-        <p className="text-slate-400 font-body">Loading NirovaAI...</p>
+        <p className="text-theme-muted font-body">Loading NirovaAI...</p>
       </div>
     </div>
   )

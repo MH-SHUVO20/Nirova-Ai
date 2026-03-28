@@ -18,17 +18,29 @@ def load_disease_model():
     """Load disease classifier from disk"""
     global _model, _class_names, _symptom_columns, _is_loaded
 
-    models_dir = os.path.join(os.path.dirname(__file__), "../../../models")
-    models_dir = os.path.abspath(models_dir)
+    here = os.path.dirname(__file__)
+    candidate_dirs = [
+        os.path.abspath(os.path.join(here, "../../models")),   # backend/app/models (current layout)
+        os.path.abspath(os.path.join(here, "../../../models")),  # backend/models (legacy layout)
+    ]
+
+    models_dir = None
+    for path in candidate_dirs:
+        classes_path = os.path.join(path, "class_names.json")
+        columns_path = os.path.join(path, "symptom_columns.json")
+        if os.path.exists(classes_path) and os.path.exists(columns_path):
+            models_dir = path
+            break
+
+    if not models_dir:
+        raise FileNotFoundError(
+            "Missing class_names.json or symptom_columns.json in expected model directories: "
+            + ", ".join(candidate_dirs)
+        )
 
     pkl_path     = os.path.join(models_dir, "disease_classifier.pkl")
     classes_path = os.path.join(models_dir, "class_names.json")
     columns_path = os.path.join(models_dir, "symptom_columns.json")
-
-    if not os.path.exists(classes_path) or not os.path.exists(columns_path):
-        raise FileNotFoundError(
-            f"Missing class_names.json or symptom_columns.json in {models_dir}"
-        )
 
     with open(classes_path) as f:
         _class_names = json.load(f)

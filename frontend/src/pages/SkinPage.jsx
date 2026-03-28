@@ -32,10 +32,16 @@ export default function SkinPage() {
     try {
       const res = await visionAPI.analyzeSkin(file)
       setResult(res.data)
+      const a = res.data?.analysis || {}
+      const summary = [
+        a.condition ? `condition=${a.condition}` : '',
+        a.severity ? `severity=${a.severity}` : '',
+        a.confidence ? `confidence=${a.confidence}` : '',
+        a.recommended_action ? `action=${a.recommended_action}` : '',
+      ].filter(Boolean).join(', ')
+      window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'skin', summary } }))
       if (res.data?.context_saved === false) {
         toast.error('Analysis done, but context was not saved to database.')
-      } else {
-        window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'skin' } }))
       }
       toast.success('Analysis complete!')
     } catch (err) {
@@ -68,7 +74,7 @@ export default function SkinPage() {
           <FiCamera className="text-primary-400" />
           Skin Condition Analyzer
         </h1>
-        <p className="text-slate-400">Upload a clear skin photo for AI-assisted condition analysis and guidance.</p>
+        <p className="text-theme-muted">Upload a clear skin photo for AI-assisted condition analysis and guidance.</p>
       </div>
 
       {/* Drop zone */}
@@ -80,26 +86,26 @@ export default function SkinPage() {
               : 'border-slate-600 hover:border-primary-500/50 hover:bg-slate-700/30'
           }`}>
           <input {...getInputProps()} />
-          <FiUpload size={40} className="text-slate-500 mx-auto mb-4" />
+          <FiUpload size={40} className="text-theme-muted mx-auto mb-4" />
           <p className="text-white font-medium mb-1">
             {isDragActive ? 'Release to upload' : 'Drop a file here or click to upload'}
           </p>
-          <p className="text-slate-500 text-sm">
+          <p className="text-theme-muted text-sm">
             JPG, PNG, WEBP up to 10MB
           </p>
-          <p className="text-slate-600 text-xs mt-2">Use a clear, well-lit close-up image for best results.</p>
+          <p className="text-theme-muted text-xs mt-2">Use a clear, well-lit close-up image for best results.</p>
         </div>
       ) : (
         <div className="card mb-4">
           <div className="relative">
             <img src={preview} alt="Uploaded"
-              className="w-full max-h-64 object-contain rounded-xl bg-slate-900" />
+              className="w-full max-h-64 object-contain rounded-xl bg-theme-soft" />
             <button onClick={reset}
-              className="absolute top-2 right-2 bg-slate-800/80 hover:bg-red-500/80 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all">
+              className="absolute top-2 right-2 bg-theme-soft/80 hover:bg-red-500/80 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all">
               ✕
             </button>
           </div>
-          <p className="text-slate-400 text-sm mt-3 text-center">{file?.name}</p>
+          <p className="text-theme-muted text-sm mt-3 text-center">{file?.name}</p>
         </div>
       )}
 
@@ -107,7 +113,7 @@ export default function SkinPage() {
         <button onClick={analyze} disabled={loading}
           className="btn-primary w-full flex items-center justify-center gap-2 py-4 mt-4">
           {loading ? (
-            <><FiLoader className="animate-spin" size={18} /> Processing with EfficientNet + Gemini Vision...</>
+            <><FiLoader className="animate-spin" size={18} /> Processing image...</>
           ) : 'Analyze Skin Condition'}
         </button>
       )}
@@ -128,7 +134,7 @@ export default function SkinPage() {
 
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-slate-400 text-sm mb-1">Identified Condition</p>
+                    <p className="text-theme-muted text-sm mb-1">Identified Condition</p>
                     <p className="font-display text-2xl font-bold text-white">
                       {result.analysis.condition}
                     </p>
@@ -153,7 +159,7 @@ export default function SkinPage() {
                 )}
 
                 {result.analysis.description && (
-                  <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                  <p className="text-theme text-sm leading-relaxed mb-4">
                     {result.analysis.description}
                   </p>
                 )}
@@ -169,10 +175,7 @@ export default function SkinPage() {
                   </div>
                 )}
 
-                <p className="text-slate-600 text-xs mt-4 italic">
-                  Analyzed by: {result.analysis.analyzer} | 
-                  Disclaimer: এই সেবা কেবল তথ্যগত সহায়তা দেয়; এটি নিবন্ধিত চিকিৎসকের পরামর্শ, রোগ নির্ণয় বা চিকিৎসার বিকল্প নয়।
-                </p>
+                <p className="text-theme-muted text-xs mt-4 italic">`r`n                  Disclaimer: This analysis is informational and not a medical diagnosis.`r`n                </p>
               </div>
             )}
 
@@ -185,3 +188,4 @@ export default function SkinPage() {
     </div>
   )
 }
+

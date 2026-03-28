@@ -39,8 +39,8 @@ export default function TimelinePage() {
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null
     return (
-      <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm">
-        <p className="text-slate-400 mb-1">{label}</p>
+      <div className="bg-theme-soft border border-theme rounded-xl px-4 py-3 text-sm">
+        <p className="text-theme-muted mb-1">{label}</p>
         {payload.map((p) => (
           <p key={p.name} style={{ color: p.color }}>
             {p.name}: {p.value}{p.name === 'risk' ? '%' : '/10'}
@@ -116,7 +116,7 @@ export default function TimelinePage() {
             <FiBarChart2 className="text-primary-400" />
             Health Timeline
           </h1>
-          <p className="text-slate-400">Review your symptom history, risk trajectory, and active alerts.</p>
+          <p className="text-theme-muted">Review your symptom history, risk trajectory, and active alerts.</p>
         </div>
         {/* Period selector */}
         <div className="flex gap-2">
@@ -133,7 +133,7 @@ export default function TimelinePage() {
           <button
             onClick={exportCsv}
             disabled={!data?.timeline?.length}
-            className="px-4 py-2 rounded-xl text-sm font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 rounded-xl text-sm font-medium bg-theme-soft text-theme hover:bg-theme-soft/70 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <FiDownload size={14} /> Export CSV
           </button>
@@ -150,7 +150,7 @@ export default function TimelinePage() {
         ].map(stat => (
           <div key={stat.label} className="card text-center">
             <div className="font-display text-2xl font-bold text-primary-400">{stat.value}</div>
-            <div className="text-slate-400 text-xs mt-1">{stat.label}</div>
+            <div className="text-theme-muted text-xs mt-1">{stat.label}</div>
           </div>
         ))}
       </div>
@@ -202,8 +202,8 @@ export default function TimelinePage() {
         </div>
       ) : (
         <div className="card text-center py-16 mb-6">
-          <FiBarChart2 size={40} className="text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-400">No data yet. Start logging symptoms to see your timeline!</p>
+          <FiBarChart2 size={40} className="text-theme-muted mx-auto mb-4" />
+          <p className="text-theme-muted">No data yet. Start logging symptoms to see your timeline!</p>
         </div>
       )}
 
@@ -211,7 +211,7 @@ export default function TimelinePage() {
       {summary?.summary && (
         <div className="card mb-6">
           <h3 className="font-semibold text-white mb-3">AI Monthly Summary</h3>
-          <p className="text-slate-300 text-sm leading-relaxed">{summary.summary}</p>
+          <p className="text-theme text-sm leading-relaxed">{summary.summary}</p>
           {summary.top_symptoms?.length > 0 && (
             <div className="mt-4">
               <p className="text-slate-500 text-xs mb-2">Most frequent symptoms</p>

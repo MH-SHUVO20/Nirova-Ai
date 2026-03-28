@@ -141,6 +141,15 @@ vercel --prod
 # Set VITE_API_URL in root .env (single env file setup)
 ```
 
+For full deployment and domain mapping steps, see `AZURE_DEPLOYMENT.md`.
+
+---
+
+## Capstone Documents
+
+- Proposal: `CAPSTONE_PROPOSAL.md`
+- Final Report: `FINAL_REPORT.md`
+
 ---
 
 ## Environment Variables

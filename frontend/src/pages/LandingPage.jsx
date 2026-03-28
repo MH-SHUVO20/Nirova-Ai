@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTheme } from '../context/ThemeContext'
 import {
   FiActivity,
   FiMessageCircle,
@@ -10,13 +11,15 @@ import {
   FiBarChart2,
   FiAlertTriangle,
   FiFileText,
+  FiMoon,
+  FiSun,
 } from 'react-icons/fi'
 
 const features = [
   {
     icon: FiActivity,
     title: 'Symptom Tracker',
-    desc: 'Document daily symptoms and monitor risk trends using validated machine learning models.',
+    desc: 'Document daily symptoms and monitor risk trends using validated clinical scoring methods.',
     color: 'from-teal-500 to-cyan-500',
   },
   {
@@ -34,7 +37,7 @@ const features = [
   {
     icon: FiMapPin,
     title: 'Dengue Detector',
-    desc: 'Assess dengue risk using Bangladesh-focused models trained on representative local clinical data.',
+    desc: 'Assess dengue risk using Bangladesh-focused analysis trained on representative local clinical data.',
     color: 'from-red-500 to-pink-500',
   },
   {
@@ -71,8 +74,10 @@ const stats = [
 ]
 
 export default function LandingPage() {
+  const { isDark, toggleTheme } = useTheme()
+
   return (
-    <div className="min-h-screen bg-[#0a1628] overflow-hidden">
+    <div className="min-h-screen bg-app overflow-hidden">
 
       {/* Background mesh gradient */}
       <div className="fixed inset-0 pointer-events-none">
@@ -86,12 +91,20 @@ export default function LandingPage() {
           <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center">
             <span className="text-white font-display font-bold">N</span>
           </div>
-          <span className="font-display font-bold text-white text-xl">NirovaAI</span>
-          <span className="text-slate-500 text-sm ml-1">নিরোভা</span>
+          <span className="font-display font-bold text-theme text-xl">NirovaAI</span>
+          <span className="text-theme-muted text-sm ml-1">নিরোভা</span>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={toggleTheme}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-theme bg-theme-soft text-theme text-sm font-medium hover:shadow-sm transition-all duration-200"
+            aria-label="Toggle color mode"
+          >
+            {isDark ? <FiSun size={16} /> : <FiMoon size={16} />}
+            {isDark ? 'Light mood' : 'Night mode'}
+          </button>
           <Link to="/login"
-            className="text-slate-400 hover:text-white transition-colors font-medium text-sm">
+            className="text-theme-muted hover:text-theme transition-colors font-medium text-sm">
             Sign in
           </Link>
           <Link to="/register"
@@ -115,13 +128,13 @@ export default function LandingPage() {
           </div>
 
           {/* Headline */}
-          <h1 className="font-display text-6xl md:text-7xl font-bold text-white leading-tight mb-6">
+          <h1 className="font-display text-6xl md:text-7xl font-bold text-theme leading-tight mb-6">
             Earlier Insight,
             <br />
             <span className="gradient-text">Better Health Decisions</span>
           </h1>
 
-          <p className="text-slate-400 text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-theme-muted text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
             NirovaAI is a primary-level health AI assistant that helps you monitor symptoms,
             assess risk for dengue and other common conditions,
             and receive practical guidance to support timely clinical care.
@@ -152,7 +165,7 @@ export default function LandingPage() {
               <div className="font-display text-3xl font-bold text-primary-400 mb-1">
                 {stat.value}
               </div>
-              <div className="text-slate-500 text-sm">{stat.label}</div>
+              <div className="text-theme-muted text-sm">{stat.label}</div>
             </div>
           ))}
         </motion.div>
@@ -161,10 +174,10 @@ export default function LandingPage() {
       {/* Features */}
       <section className="relative z-10 max-w-7xl mx-auto px-8 pb-24">
         <div className="text-center mb-16">
-          <h2 className="font-display text-4xl font-bold text-white mb-4">
+          <h2 className="font-display text-4xl font-bold text-theme mb-4">
             What You Can Use Right Now
           </h2>
-          <p className="text-slate-400 text-lg max-w-xl mx-auto">
+          <p className="text-theme-muted text-lg max-w-xl mx-auto">
             These are active features currently available in the product today.
           </p>
         </div>
@@ -181,10 +194,10 @@ export default function LandingPage() {
               <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${feature.color} p-2.5 mb-4`}>
                 <feature.icon size={28} className="text-white" />
               </div>
-              <h3 className="font-display text-xl font-semibold text-white mb-2">
+              <h3 className="font-display text-xl font-semibold text-theme mb-2">
                 {feature.title}
               </h3>
-              <p className="text-slate-400 leading-relaxed">
+              <p className="text-theme-muted leading-relaxed">
                 {feature.desc}
               </p>
             </motion.div>
@@ -193,12 +206,12 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-800 px-8 py-8 max-w-7xl mx-auto">
+      <footer className="relative z-10 border-t border-theme px-8 py-8 max-w-7xl mx-auto">
         <div className="flex items-center justify-between">
-          <p className="text-slate-500 text-sm">
+          <p className="text-theme-muted text-sm">
             © 2026 NirovaAI — Built for Bangladesh
           </p>
-          <p className="text-slate-600 text-xs">
+          <p className="text-theme-muted text-xs">
             Disclaimer: Primary-level health guidance only; not a replacement for clinical diagnosis.
           </p>
         </div>

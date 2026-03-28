@@ -140,9 +140,10 @@ async def setup_indexes():
         ])
 
         # Knowledge base: source lookup for RAG
-        await db.knowledge_chunks.create_index(
-            [("source", ASCENDING), ("category", ASCENDING)]
-        )
+        await db.knowledge_chunks.create_indexes([
+            IndexModel([("source", ASCENDING), ("category", ASCENDING)]),
+            IndexModel([("content", "text")]),
+        ])
 
         log.info("Database indexes created")
 

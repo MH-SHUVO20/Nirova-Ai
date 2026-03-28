@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { visionAPI } from '../utils/api'
+import { visionAPI, extractErrorMessage } from '../utils/api'
 import toast from 'react-hot-toast'
 import { FiUpload, FiFileText, FiLoader, FiCheckCircle, FiAlertCircle } from 'react-icons/fi'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -39,14 +39,19 @@ export default function LabReportPage() {
     try {
       const res = await visionAPI.analyzeLab(file)
       setResult(res.data)
+      const a = res.data?.analysis || {}
+      const summary = [
+        a.action_needed ? `action=${a.action_needed}` : '',
+        a.key_findings ? `findings=${a.key_findings}` : '',
+        Array.isArray(a.tests) ? `tests=${a.tests.length}` : '',
+      ].filter(Boolean).join(', ')
+      window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'lab', summary } }))
       if (res.data?.context_saved === false) {
         toast.error('Analysis done, but context was not saved to database.')
-      } else {
-        window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'lab' } }))
       }
       toast.success('Lab analysis complete')
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Lab analysis failed')
+      toast.error(extractErrorMessage(err) || 'Lab analysis failed')
     } finally {
       setLoading(false)
     }
@@ -78,7 +83,7 @@ export default function LabReportPage() {
         <div className="lg:col-span-2 space-y-4">
           <div className="card">
             <p className="text-white font-semibold mb-2">Step 1: Upload Report</p>
-            <p className="text-slate-400 text-sm">Use a clear image or PDF of your lab report.</p>
+            <p className="text-theme-muted text-sm">Use a clear image or PDF of your lab report.</p>
             <div
               {...getRootProps()}
               className={`mt-4 border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
@@ -88,23 +93,23 @@ export default function LabReportPage() {
               }`}
             >
               <input {...getInputProps()} />
-              <FiUpload size={28} className="mx-auto text-slate-500 mb-2" />
+              <FiUpload size={28} className="mx-auto text-theme-muted mb-2" />
               <p className="text-sm text-white">Drop file or click to upload</p>
-              <p className="text-xs text-slate-500 mt-1">JPG, PNG, WEBP, PDF up to 10MB</p>
+              <p className="text-xs text-theme-muted mt-1">JPG, PNG, WEBP, PDF up to 10MB</p>
             </div>
 
             {preview && (
               <div className="mt-4">
-                <img src={preview} alt="Lab report preview" className="w-full rounded-xl bg-slate-900 max-h-52 object-contain" />
-                <p className="text-slate-400 text-xs mt-2 truncate">{file?.name}</p>
+                <img src={preview} alt="Lab report preview" className="w-full rounded-xl bg-theme-soft max-h-52 object-contain" />
+                <p className="text-theme-muted text-xs mt-2 truncate">{file?.name}</p>
               </div>
             )}
 
             {file && !preview && (
-              <div className="mt-4 rounded-xl border border-slate-600 bg-slate-900/60 p-4">
-                <p className="text-slate-300 text-sm">Selected file</p>
+              <div className="mt-4 rounded-xl border border-theme bg-theme-soft p-4">
+                <p className="text-theme text-sm">Selected file</p>
                 <p className="text-white text-sm font-medium mt-1 truncate">{file?.name}</p>
-                <p className="text-slate-500 text-xs mt-1">PDF preview is not shown. Analysis still works.</p>
+                <p className="text-theme-muted text-xs mt-1">PDF preview is not shown. Analysis still works.</p>
               </div>
             )}
 
@@ -120,7 +125,7 @@ export default function LabReportPage() {
 
           <div className="card">
             <p className="text-white font-semibold mb-2">Step 2: Read Highlights</p>
-            <p className="text-slate-400 text-sm">Abnormal values are grouped first so you can focus quickly.</p>
+            <p className="text-theme-muted text-sm">Abnormal values are grouped first so you can focus quickly.</p>
           </div>
         </div>
 
@@ -133,9 +138,9 @@ export default function LabReportPage() {
                 className="card h-full min-h-[340px] flex items-center justify-center"
               >
                 <div className="text-center">
-                  <FiFileText size={34} className="mx-auto text-slate-500 mb-3" />
+                  <FiFileText size={34} className="mx-auto text-theme-muted mb-3" />
                   <p className="text-white font-medium">No analysis yet</p>
-                  <p className="text-slate-500 text-sm mt-1">Upload and analyze a report to view structured results.</p>
+                  <p className="text-theme-muted text-sm mt-1">Upload and analyze a report to view structured results.</p>
                 </div>
               </motion.div>
             )}
@@ -144,7 +149,7 @@ export default function LabReportPage() {
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                 <div className="grid grid-cols-3 gap-3">
                   <div className="card text-center p-4">
-                    <p className="text-slate-400 text-xs">Total Tests</p>
+                    <p className="text-theme-muted text-xs">Total Tests</p>
                     <p className="text-white text-2xl font-bold">{tests.length}</p>
                   </div>
                   <div className="card text-center p-4 border border-amber-500/30">
@@ -201,8 +206,8 @@ export default function LabReportPage() {
                 {result?.analysis?.key_findings && (
                   <div className="card border border-primary-500/30">
                     <h3 className="text-white font-semibold mb-2">Summary</h3>
-                    <p className="text-slate-300 text-sm leading-relaxed">{result.analysis.key_findings}</p>
-                    <p className="text-slate-500 text-xs mt-2">Processed source: {result.source_type || 'unknown'}</p>
+                    <p className="text-theme text-sm leading-relaxed">{result.analysis.key_findings}</p>
+                    <p className="text-theme-muted text-xs mt-2">Processed source: {result.source_type || 'unknown'}</p>
                   </div>
                 )}
               </motion.div>

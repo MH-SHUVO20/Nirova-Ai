@@ -4,11 +4,12 @@ NirovaAI — Symptoms API
 Endpoints:
 - POST /symptoms/log      → log daily symptoms + instant ML prediction
 - POST /symptoms/predict  → predict disease (with optional dengue lab values)
-- GET  /symptoms/history  → get your symptom history
+- GET  /symptoms/history  → get your symptom history with pagination
 - GET  /symptoms/latest   → get your most recent log
+- GET  /symptoms/timeline → get aggregated trends and health timeline
 """
 
-from fastapi import APIRouter, Depends, Request, Query
+from fastapi import APIRouter, Depends, Request, Query, Path
 from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import List, Optional
 from app.core.database import symptom_logs, alerts, users, symptom_analyses
@@ -17,6 +18,7 @@ from app.core.redis_client import cache_get, cache_set
 from app.ai.ml.disease_model import predict_disease
 from app.ai.ml.dengue_model import predict_dengue
 from app.core.rate_limit import limiter
+from app.tasks.health_timeline import get_user_health_timeline
 from datetime import datetime
 import hashlib
 import json
@@ -30,6 +32,7 @@ SYMPTOM_ALIASES = {
     "diarrhea": "diarrhoea",
     "shortness_of_breath": "breathlessness",
     "rash": "skin_rash",
+    "fever": "high_fever",
 }
 
 
@@ -37,9 +40,81 @@ def _normalize_symptoms(symptoms: List[str]) -> List[str]:
     normalized = []
     for symptom in symptoms:
         clean = symptom.strip().lower().replace(" ", "_")
+        if not clean:
+            continue
         normalized.append(SYMPTOM_ALIASES.get(clean, clean))
     # Preserve order while removing duplicates.
     return list(dict.fromkeys(normalized))
+
+
+def _validate_and_filter_symptoms(symptoms: List[str]) -> List[str]:
+    normalized = _normalize_symptoms(symptoms)
+    if not normalized:
+        raise ValueError("Please provide at least one symptom")
+
+    if not VALID_SYMPTOMS:
+        return normalized
+
+    invalid = [s for s in normalized if s not in VALID_SYMPTOMS]
+    valid = [s for s in normalized if s in VALID_SYMPTOMS]
+
+    if not valid:
+        raise ValueError(
+            "Invalid symptoms. Please use recognized symptom names such as high_fever, headache, cough, nausea."
+        )
+
+    if invalid:
+        log.info(f"Ignoring unsupported symptoms: {invalid}")
+
+    return valid
+
+
+def _normalize_disease_name(name: str) -> str:
+    return str(name or "").strip().lower()
+
+
+def _apply_disease_exclusions(prediction: dict, excluded_diseases: List[str]) -> dict:
+    """Filter predicted diseases against user exclusions and pick next best non-excluded disease."""
+    if not prediction or not excluded_diseases:
+        return prediction
+
+    excluded = {_normalize_disease_name(d) for d in excluded_diseases if d}
+    if not excluded:
+        return prediction
+
+    top3 = prediction.get("top3_predictions") or []
+    filtered_top = [
+        item for item in top3
+        if _normalize_disease_name(item.get("disease")) not in excluded
+    ]
+
+    current_disease = _normalize_disease_name(prediction.get("predicted_disease"))
+    current_excluded = current_disease in excluded
+
+    updated = {**prediction}
+    updated["excluded_diseases_applied"] = sorted(excluded)
+    updated["top3_predictions"] = filtered_top[:3]
+
+    if not current_excluded:
+        return updated
+
+    if filtered_top:
+        replacement = filtered_top[0]
+        updated["predicted_disease"] = replacement.get("disease", prediction.get("predicted_disease"))
+        updated["confidence"] = float(replacement.get("probability", prediction.get("confidence", 0.0)))
+        return updated
+
+    updated["predicted_disease"] = "No non-excluded disease matched"
+    updated["confidence"] = 0.0
+    updated["triage_color"] = "green"
+    updated["recommended_action"] = "Monitor symptoms and consult a doctor if needed"
+    return updated
+
+
+async def _get_excluded_diseases(user_id) -> List[str]:
+    user = await users().find_one({"_id": user_id}, {"excluded_diseases": 1})
+    raw = (user or {}).get("excluded_diseases") or []
+    return [d for d in raw if isinstance(d, str) and d.strip()]
 
 
 async def _store_symptom_analysis(
@@ -90,12 +165,7 @@ class SymptomLogRequest(BaseModel):
 
     @field_validator('symptoms')
     def validate_symptoms(cls, v):
-        v = _normalize_symptoms(v)
-        if VALID_SYMPTOMS:
-            invalid = [s for s in v if s not in VALID_SYMPTOMS]
-            if invalid:
-                raise ValueError(f"Invalid symptoms: {', '.join(invalid)}")
-        return v
+        return _validate_and_filter_symptoms(v)
 
 class PredictRequest(BaseModel):
     symptoms: List[str]
@@ -108,12 +178,7 @@ class PredictRequest(BaseModel):
 
     @field_validator('symptoms')
     def validate_symptoms(cls, v):
-        v = _normalize_symptoms(v)
-        if VALID_SYMPTOMS:
-            invalid = [s for s in v if s not in VALID_SYMPTOMS]
-            if invalid:
-                raise ValueError(f"Invalid symptoms: {', '.join(invalid)}")
-        return v
+        return _validate_and_filter_symptoms(v)
 
     @field_validator("ns1_result", "igg_result", "igm_result")
     def validate_binary_values(cls, v):
@@ -134,12 +199,7 @@ class DenguePredictRequest(BaseModel):
 
     @field_validator('symptoms')
     def validate_symptoms(cls, v):
-        v = _normalize_symptoms(v)
-        if VALID_SYMPTOMS:
-            invalid = [s for s in v if s not in VALID_SYMPTOMS]
-            if invalid:
-                raise ValueError(f"Invalid symptoms: {', '.join(invalid)}")
-        return v
+        return _validate_and_filter_symptoms(v)
 
     @field_validator("ns1_result", "igg_result", "igm_result")
     def validate_binary_values(cls, v):
@@ -171,8 +231,9 @@ async def log_symptoms(
     """
     user_id = current_user["_id"]
 
-    # Run ML prediction immediately
-    prediction = predict_disease(data.symptoms)
+    # Run ML prediction immediately, then apply user's disease exclusions.
+    excluded_diseases = await _get_excluded_diseases(user_id)
+    prediction = _apply_disease_exclusions(predict_disease(data.symptoms), excluded_diseases)
 
     # Save to MongoDB
     log_entry = {
@@ -256,25 +317,30 @@ async def predict(
         "district": data.district,
     }
     cache_key = f"predict:{hashlib.sha256(json.dumps(cache_payload, sort_keys=True).encode()).hexdigest()[:24]}"
+    excluded_diseases = await _get_excluded_diseases(current_user["_id"])
     cached = await cache_get(cache_key)
     if cached:
+        cached_prediction = {
+            **cached,
+            "disease_prediction": _apply_disease_exclusions(cached.get("disease_prediction") or {}, excluded_diseases),
+        }
         context_saved, context_record_id = await _store_symptom_analysis(
             user_id=current_user["_id"],
             symptoms=normalized_symptoms,
             analysis_mode="predict",
-            disease_prediction=cached.get("disease_prediction"),
-            dengue_prediction=cached.get("dengue_prediction"),
-            extra={"age": data.age, "district": data.district, "has_lab_values": cached.get("has_lab_values"), "from_cache": True},
+            disease_prediction=cached_prediction.get("disease_prediction"),
+            dengue_prediction=cached_prediction.get("dengue_prediction"),
+            extra={"age": data.age, "district": data.district, "has_lab_values": cached_prediction.get("has_lab_values"), "from_cache": True},
         )
         return {
-            "prediction": cached,
+            "prediction": cached_prediction,
             "from_cache": True,
             "context_saved": context_saved,
             "context_record_id": context_record_id,
         }
 
     # Always run general disease classifier
-    disease_result = predict_disease(normalized_symptoms)
+    disease_result = _apply_disease_exclusions(predict_disease(normalized_symptoms), excluded_diseases)
 
     # Run dengue-specific model if lab values were provided
     dengue_result = None
@@ -322,6 +388,58 @@ async def predict(
         "from_cache": False,
         "context_saved": context_saved,
         "context_record_id": context_record_id,
+    }
+
+
+@router.get("/excluded-diseases")
+async def get_excluded_diseases(current_user: dict = Depends(get_current_user)):
+    excluded_diseases = await _get_excluded_diseases(current_user["_id"])
+    return {
+        "excluded_diseases": sorted(set(excluded_diseases), key=lambda x: x.lower())
+    }
+
+
+class ExcludedDiseaseRequest(BaseModel):
+    disease: str = Field(..., min_length=1, max_length=120)
+
+    @field_validator("disease")
+    def validate_disease(cls, v):
+        value = str(v or "").strip()
+        if not value:
+            raise ValueError("Disease name cannot be empty")
+        return value
+
+
+@router.post("/excluded-diseases")
+async def add_excluded_disease(
+    data: ExcludedDiseaseRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    disease = data.disease.strip()
+    await users().update_one(
+        {"_id": current_user["_id"]},
+        {"$addToSet": {"excluded_diseases": disease}}
+    )
+    excluded_diseases = await _get_excluded_diseases(current_user["_id"])
+    return {
+        "success": True,
+        "excluded_diseases": sorted(set(excluded_diseases), key=lambda x: x.lower())
+    }
+
+
+@router.delete("/excluded-diseases/{disease}")
+async def remove_excluded_disease(
+    disease: str = Path(..., min_length=1),
+    current_user: dict = Depends(get_current_user)
+):
+    await users().update_one(
+        {"_id": current_user["_id"]},
+        {"$pull": {"excluded_diseases": disease}}
+    )
+    excluded_diseases = await _get_excluded_diseases(current_user["_id"])
+    return {
+        "success": True,
+        "excluded_diseases": sorted(set(excluded_diseases), key=lambda x: x.lower())
     }
 
 
@@ -406,31 +524,54 @@ async def predict_dengue_only(
 
 @router.get("/history")
 async def get_history(
-    limit: int = Query(default=30, ge=1, le=100),
+    skip: int = Query(default=0, ge=0, description="Number of records to skip"),
+    limit: int = Query(default=20, ge=1, le=100, description="Number of records per page (max 100)"),
     current_user: dict = Depends(get_current_user)
 ):
-    """Get your symptom history (most recent first)"""
-    cursor = symptom_logs().find(
-        {"user_id": current_user["_id"]}
-    ).sort("date", -1).limit(limit)
+    """
+    Get your symptom history with pagination (most recent first).
+    
+    Query Parameters:
+    - skip: Number of records to skip (default 0)
+    - limit: Records per page (default 20, max 100)
+    """
+    try:
+        # Get total count for pagination metadata
+        total_count = await symptom_logs().count_documents({"user_id": current_user["_id"]})
+        
+        # Fetch paginated records
+        cursor = symptom_logs().find(
+            {"user_id": current_user["_id"]}
+        ).sort("created_at", -1).skip(skip).limit(limit)
 
-    history = []
-    async for entry in cursor:
-        history.append({
-            "id": str(entry["_id"]),
-            "symptoms": entry.get("symptoms", []),
-            "severity": entry.get("severity", 0),
-            "risk_score": entry.get("risk_score", 0.0),
-            "predicted_disease": entry.get("predicted_disease"),
-            "triage_color": entry.get("triage_color", "green"),
-            "notes": entry.get("notes", ""),
-            "date": entry["date"].isoformat() if entry.get("date") else None
-        })
+        history = []
+        async for entry in cursor:
+            history.append({
+                "id": str(entry["_id"]),
+                "symptoms": entry.get("symptoms", []),
+                "severity": entry.get("severity", 0),
+                "risk_score": entry.get("risk_score", 0.0),
+                "predicted_disease": entry.get("predicted_disease"),
+                "triage_color": entry.get("triage_color", "green"),
+                "notes": entry.get("notes", ""),
+                "date": entry.get("created_at", entry.get("date")).isoformat() if entry.get("created_at") or entry.get("date") else None
+            })
 
-    return {
-        "total_logs": len(history),
-        "history": history
-    }
+        return {
+            "total": total_count,
+            "returned": len(history),
+            "skip": skip,
+            "limit": limit,
+            "hasMore": skip + len(history) < total_count,
+            "history": history
+        }
+    except Exception as e:
+        log.error(f"Error fetching symptom history: {e}")
+        return {
+            "error": True,
+            "message": "Unable to fetch history. Please try again.",
+            "history": []
+        }
 
 
 @router.get("/latest")
@@ -453,3 +594,30 @@ async def get_latest(current_user: dict = Depends(get_current_user)):
         "triage_color": latest.get("triage_color", "green"),
         "date": latest["date"].isoformat() if latest.get("date") else None
     }
+
+
+@router.get("/timeline")
+@limiter.limit("20/minute")
+async def get_timeline(
+    request: Request,
+    period: str = Query(default="30d", regex="^(7d|30d|90d)$"),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Get your health timeline with aggregated trends and statistics.
+    
+    Query Parameters:
+    - period: "7d" (last week), "30d" (last month, default), or "90d" (last quarter)
+    
+    Returns: Symptom trends, frequency analysis, severity changes, and health insights.
+    """
+    try:
+        timeline = await get_user_health_timeline(current_user["_id"], period=period)
+        return timeline
+    except Exception as e:
+        log.error(f"Error retrieving timeline for user {current_user['_id']}: {e}")
+        return {
+            "error": True,
+            "message": "Unable to retrieve health timeline",
+            "period": period
+        }

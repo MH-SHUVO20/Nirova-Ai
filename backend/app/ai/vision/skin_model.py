@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 
 log = logging.getLogger(__name__)
 
@@ -10,18 +11,49 @@ def load_skin_model():
     pass
 
 
-async def analyze_skin_image(image_bytes: bytes) -> dict:
+async def analyze_skin_image(image_bytes: bytes, mime_type: str | None = None) -> dict:
     """Analyze skin condition from image using Gemini Vision"""
-    return await _gemini_vision(image_bytes)
+    return await _gemini_vision(image_bytes, mime_type or "image/jpeg")
 
 
-async def _gemini_vision(image_bytes: bytes) -> dict:
+def _normalize_image_mime_type(mime_type: str | None) -> str:
+    if not mime_type:
+        return "image/jpeg"
+    lowered = mime_type.strip().lower()
+    if lowered == "image/jpg":
+        return "image/jpeg"
+    if lowered.startswith("image/"):
+        return lowered
+    return "image/jpeg"
+
+
+def _extract_json_payload(text: str) -> dict:
+    cleaned = (text or "").strip()
+    if "```json" in cleaned:
+        cleaned = cleaned.split("```json", 1)[1].split("```", 1)[0]
+    elif "```" in cleaned:
+        cleaned = cleaned.split("```", 1)[1].split("```", 1)[0]
+
+    try:
+        return json.loads(cleaned.strip())
+    except Exception:
+        # Fallback: extract the first JSON object from mixed model text.
+        match = re.search(r"\{[\s\S]*\}", cleaned)
+        if not match:
+            raise
+        return json.loads(match.group(0))
+
+
+async def _gemini_vision(image_bytes: bytes, mime_type: str = "image/jpeg") -> dict:
     """Analyze skin condition using Gemini Vision API"""
     import google.generativeai as genai
     import base64
     from app.core.config import settings
 
     try:
+        if not settings.GEMINI_API_KEY:
+            raise RuntimeError("GEMINI_API_KEY is not configured")
+
         genai.configure(api_key=settings.GEMINI_API_KEY)
         model_candidates = [
             "gemini-flash-latest",
@@ -54,30 +86,26 @@ skin infections, dengue rash, chickenpox, and fungal infections."""
         last_error = None
         response = None
         model_used = None
+        safe_mime_type = _normalize_image_mime_type(mime_type)
         for model_name in model_candidates:
             try:
                 model = genai.GenerativeModel(model_name)
                 response = model.generate_content([
-                    {"mime_type": "image/jpeg", "data": img_b64},
+                    {"mime_type": safe_mime_type, "data": img_b64},
                     prompt
-                ])
+                ], request_options={"timeout": 30})
+                if not response or not getattr(response, "text", None):
+                    raise RuntimeError("Empty model response")
                 model_used = model_name
                 break
             except Exception as e:
-                import logging
-                logging.getLogger(__name__).warning(f"Skin model analysis failed: {e}")
+                log.warning(f"Skin model analysis failed ({model_name}): {e}")
                 last_error = e
 
         if response is None:
             raise RuntimeError(f"All Gemini model candidates failed: {last_error}")
 
-        text = response.text.strip()
-        if "```json" in text:
-            text = text.split("```json")[1].split("```")[0]
-        elif "```" in text:
-            text = text.split("```")[1].split("```")[0]
-
-        result = json.loads(text.strip())
+        result = _extract_json_payload(response.text)
         result["analyzer"] = f"Gemini Vision ({model_used})"
         return result
 
@@ -90,6 +118,7 @@ skin infections, dengue rash, chickenpox, and fungal infections."""
             "description": "Image analysis is temporarily unavailable",
             "recommended_action": "see_doctor",
             "analyzer": "unavailable",
+            "error": str(e),
             "disclaimer": "Please consult a doctor for proper diagnosis — "
                          "এই সেবা কেবল তথ্যগত সহায়তা দেয়; এটি নিবন্ধিত চিকিৎসকের পরামর্শ, রোগ নির্ণয় বা চিকিৎসার বিকল্প নয়।"
         }

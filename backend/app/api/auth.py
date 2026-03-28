@@ -47,20 +47,34 @@ def _normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
-def _cookie_secure_flag() -> bool:
-    # Automatically enable secure cookies when frontend URL is HTTPS.
+def _cookie_secure_flag(request: Request | None = None) -> bool:
+    # Explicit configuration always wins.
     if settings.COOKIE_SECURE:
         return True
+
+    # In local debug/development mode, avoid Secure cookies on HTTP.
+    if settings.DEBUG:
+        return False
+
+    # Prefer request-aware protocol detection when available.
+    if request is not None:
+        forwarded_proto = (request.headers.get("x-forwarded-proto") or "").lower().strip()
+        if forwarded_proto:
+            return forwarded_proto == "https"
+        return request.url.scheme == "https"
+
+    # Fallback to configured frontend URL if request context is unavailable.
     return settings.FRONTEND_URL.lower().startswith("https://")
 
 
-def _set_auth_cookie(response: JSONResponse, token: str) -> None:
+def _set_auth_cookie(response: JSONResponse, token: str, request: Request | None = None) -> None:
     response.set_cookie(
         key=settings.AUTH_COOKIE_NAME,
         value=token,
         httponly=True,
-        secure=_cookie_secure_flag(),
+        secure=_cookie_secure_flag(request),
         samesite=settings.COOKIE_SAMESITE,
+        path="/",
         max_age=604800,
     )
 
@@ -111,6 +125,8 @@ class LoginRequest(BaseModel):
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
+    age: int | None = None
+    district: str | None = None
 
 
 class ResetPasswordRequest(BaseModel):
@@ -131,6 +147,7 @@ class AuthResponse(BaseModel):
 
 class ForgotPasswordResponse(BaseModel):
     message: str
+    verification_method: str | None = None
     reset_token_preview: str | None = None
     reset_link_preview: str | None = None
 
@@ -168,7 +185,7 @@ async def auth_health():
     }
 
 @router.post("/register", status_code=201)
-async def register(data: RegisterRequest):
+async def register(data: RegisterRequest, request: Request):
     """
     Create a new NirovaAI account.
     Password is hashed before storage — we never store plain passwords.
@@ -209,12 +226,12 @@ async def register(data: RegisterRequest):
         "name": data.name,
         "email": data.email
     }, status_code=201)
-    _set_auth_cookie(response, create_token(user_id))
+    _set_auth_cookie(response, create_token(user_id), request)
     return response
 
 
 @router.post("/login")
-async def login(data: LoginRequest):
+async def login(data: LoginRequest, request: Request):
     """
     Login with email and password.
     Returns a JWT token via HttpOnly cookie valid for 7 days.
@@ -242,19 +259,20 @@ async def login(data: LoginRequest):
         "name": user["name"],
         "email": user["email"]
     })
-    _set_auth_cookie(response, create_token(user_id))
+    _set_auth_cookie(response, create_token(user_id), request)
     return response
 
 
 @router.post("/logout")
-async def logout():
+async def logout(request: Request):
     """Clear the authentication cookie"""
     response = JSONResponse({"message": "Successfully logged out"})
     response.delete_cookie(
         key=settings.AUTH_COOKIE_NAME,
         httponly=True,
-        secure=_cookie_secure_flag(),
+        secure=_cookie_secure_flag(request),
         samesite=settings.COOKIE_SAMESITE,
+        path="/",
     )
     return response
 
@@ -336,12 +354,32 @@ async def forgot_password(data: ForgotPasswordRequest, request: Request):
     if sent:
         return ForgotPasswordResponse(
             message="Password reset instructions were sent to your email.",
+            verification_method="email",
             reset_token_preview=preview_token,
             reset_link_preview=preview_link,
         )
 
+    # Production-safe fallback when SMTP is unavailable:
+    # allow returning reset token only if explicit KBA fallback is enabled and identity fields match.
+    if settings.ALLOW_PASSWORD_RESET_KBA_FALLBACK:
+        district_input = (data.district or "").strip().lower()
+        user_district = str(user.get("district", "")).strip().lower()
+        district_match = bool(district_input) and district_input == user_district
+        age_input = data.age
+        user_age = user.get("age")
+        age_match = isinstance(age_input, int) and isinstance(user_age, int) and age_input == user_age
+
+        if district_match and age_match:
+            return ForgotPasswordResponse(
+                message="Identity verified. Use the provided reset token to set a new password.",
+                verification_method="kba",
+                reset_token_preview=raw_token,
+                reset_link_preview=reset_link,
+            )
+
     return ForgotPasswordResponse(
-        message="Password reset token generated. Email is not configured; use local development preview flow.",
+        message="Password reset requested. Email is unavailable; provide account age and district for fallback verification.",
+        verification_method="unavailable",
         reset_token_preview=preview_token,
         reset_link_preview=preview_link,
     )

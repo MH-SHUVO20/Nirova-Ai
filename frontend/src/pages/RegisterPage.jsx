@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
+import { extractErrorMessage } from '../utils/api'
 import { FiUser, FiMail, FiLock, FiMapPin, FiArrowRight, FiLoader } from 'react-icons/fi'
 
 const BD_DISTRICTS = [
@@ -27,17 +28,21 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (form.password.length < 6) {
-      toast.error('Password must be at least 6 characters')
+    if (form.password.length < 8) {
+      toast.error('Password must be at least 8 characters')
       return
     }
     setLoading(true)
     try {
-      await register({ ...form, age: parseInt(form.age) || 0 })
+      await register({
+        ...form,
+        email: form.email.trim().toLowerCase(),
+        age: parseInt(form.age) || 0,
+      })
       toast.success('Account created successfully.')
       navigate('/app', { replace: true })
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Registration failed')
+      toast.error(extractErrorMessage(err) || 'Registration failed')
     } finally {
       setLoading(false)
     }
@@ -46,7 +51,7 @@ export default function RegisterPage() {
   const set = (field) => (e) => setForm({...form, [field]: e.target.value})
 
   return (
-    <div className="min-h-screen bg-[#0a1628] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-app flex items-center justify-center px-4 py-12">
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-primary-600/8 rounded-full blur-3xl" />
       </div>
@@ -59,17 +64,17 @@ export default function RegisterPage() {
             </div>
             <span className="font-display font-bold text-white text-2xl">NirovaAI</span>
           </Link>
-          <h2 className="font-display text-3xl font-bold text-white">Create your account</h2>
-          <p className="text-slate-400 mt-2">Set up your secure account to start symptom tracking and AI-guided triage.</p>
+          <h2 className="font-display text-3xl font-bold text-theme">Create account</h2>
+          <p className="text-theme-muted mt-2">Set up your secure account to start symptom tracking and AI-guided triage.</p>
         </div>
 
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Full Name</label>
+              <label className="block text-sm font-medium text-theme mb-1.5">Full Name</label>
               <div className="relative">
-                <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-muted" size={16} />
                 <input type="text" value={form.name} onChange={set('name')}
                   placeholder="Your name" className="input-field pl-11" required />
               </div>
@@ -77,9 +82,9 @@ export default function RegisterPage() {
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-theme mb-1.5">Email</label>
               <div className="relative">
-                <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-muted" size={16} />
                 <input type="email" value={form.email} onChange={set('email')}
                   placeholder="you@example.com" className="input-field pl-11" required />
               </div>
@@ -87,18 +92,18 @@ export default function RegisterPage() {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-theme mb-1.5">Password</label>
               <div className="relative">
-                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-muted" size={16} />
                 <input type="password" value={form.password} onChange={set('password')}
-                  placeholder="Min 6 characters" className="input-field pl-11" required />
+                  placeholder="Min 8 characters" className="input-field pl-11" required />
               </div>
             </div>
 
             {/* Age + District row */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Age</label>
+                <label className="block text-sm font-medium text-theme mb-1.5">Age</label>
                 <input type="number" value={form.age} onChange={set('age')}
                   placeholder="25" min="1" max="120" className="input-field" />
               </div>
@@ -142,7 +147,7 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <p className="text-center text-slate-400 text-sm mt-5">
+          <p className="text-center text-theme-muted text-sm mt-5">
             Already have an account?{' '}
             <Link to="/login" className="text-primary-400 hover:text-primary-300 font-medium">
               Sign in

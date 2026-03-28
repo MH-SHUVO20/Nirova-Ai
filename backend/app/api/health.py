@@ -20,6 +20,20 @@ router = APIRouter(prefix="/health", tags=["Health Timeline"])
 log = logging.getLogger(__name__)
 
 
+def _to_iso(value) -> str:
+    """Safely convert datetime-ish values to ISO strings for API responses."""
+    if value is None:
+        return datetime.utcnow().isoformat()
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, str):
+        return value
+    try:
+        return value.isoformat()
+    except Exception:
+        return datetime.utcnow().isoformat()
+
+
 @router.get("/timeline")
 async def get_timeline(
     days: int = Query(default=30, ge=1, le=365),
@@ -29,32 +43,37 @@ async def get_timeline(
     user_id = current_user["_id"]
     since = datetime.utcnow() - timedelta(days=days)
 
-    # Get symptom logs
-    timeline_entries = []
-    async for entry in symptom_logs().find(
-        {"user_id": user_id, "date": {"$gte": since}}
-    ).sort("date", 1):
-        timeline_entries.append({
-            "date": entry["date"].isoformat(),
-            "symptoms": entry.get("symptoms", []),
-            "severity": entry.get("severity", 0),
-            "risk_score": entry.get("risk_score", 0.0),
-            "predicted_disease": entry.get("predicted_disease"),
-            "triage_color": entry.get("triage_color", "green")
-        })
+    try:
+        # Get symptom logs
+        timeline_entries = []
+        async for entry in symptom_logs().find(
+            {"user_id": user_id, "date": {"$gte": since}}
+        ).sort("date", 1):
+            timeline_entries.append({
+                "date": _to_iso(entry.get("date") or entry.get("created_at")),
+                "symptoms": entry.get("symptoms", []),
+                "severity": entry.get("severity", 0),
+                "risk_score": entry.get("risk_score", 0.0),
+                "predicted_disease": entry.get("predicted_disease"),
+                "triage_color": entry.get("triage_color", "green")
+            })
 
-    # Get active alerts
-    active_alerts = []
-    async for alert in alerts().find(
-        {"user_id": user_id, "resolved": False}
-    ).sort("created_at", -1).limit(10):
-        active_alerts.append({
-            "id": str(alert["_id"]),
-            "disease": alert.get("disease"),
-            "probability": alert.get("probability", 0.0),
-            "recommended_action": alert.get("recommended_action"),
-            "created_at": alert["created_at"].isoformat()
-        })
+        # Get active alerts
+        active_alerts = []
+        async for alert in alerts().find(
+            {"user_id": user_id, "resolved": False}
+        ).sort("created_at", -1).limit(10):
+            active_alerts.append({
+                "id": str(alert["_id"]),
+                "disease": alert.get("disease"),
+                "probability": alert.get("probability", 0.0),
+                "recommended_action": alert.get("recommended_action"),
+                "created_at": _to_iso(alert.get("created_at"))
+            })
+    except Exception as exc:
+        log.error(f"Failed to build health timeline for user {user_id}: {exc}")
+        timeline_entries = []
+        active_alerts = []
 
     # Calculate summary stats
     avg_severity = (

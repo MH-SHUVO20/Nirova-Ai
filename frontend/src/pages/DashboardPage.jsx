@@ -14,14 +14,30 @@ export default function DashboardPage() {
   const [loading, setLoading]   = useState(true)
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       healthAPI.timeline(7),
       symptomsAPI.latest()
     ]).then(([tRes, lRes]) => {
-      setTimeline(tRes.data)
-      setLatest(lRes.data)
-    }).catch(() => {
-      toast.error('Failed to load dashboard data')
+      const timelineLoaded = tRes.status === 'fulfilled'
+      const latestLoaded = lRes.status === 'fulfilled'
+
+      if (timelineLoaded) {
+        setTimeline(tRes.value.data)
+      } else {
+        setTimeline({ summary: {}, active_alerts: [], timeline: [] })
+      }
+
+      if (latestLoaded) {
+        setLatest(lRes.value.data)
+      } else {
+        setLatest(null)
+      }
+
+      if (!timelineLoaded && !latestLoaded) {
+        toast.error('Failed to load dashboard data')
+      } else if (!timelineLoaded || !latestLoaded) {
+        toast.error('Some dashboard data could not be loaded')
+      }
     })
     .finally(() => setLoading(false))
   }, [])
@@ -49,13 +65,14 @@ export default function DashboardPage() {
     { to: '/app/prescription', icon: FiClipboard, label: 'Prescription',   color: 'from-emerald-700 to-teal-700', desc: 'Extract medicines and schedule' },
     { to: '/app/timeline', icon: FiTrendingUp,    label: 'View Timeline',  color: 'from-slate-600 to-slate-700',  desc: 'Full health history' },
   ]
+  const firstName = (user?.name || 'User').split(' ')[0]
 
   return (
     <div className="animate-fade-in">
       {/* Header */}
       <div className="mb-8">
         <h1 className="font-display text-3xl font-bold text-white">
-          Good {getTimeOfDay()}, {user?.name?.split(' ')[0]}
+          Good {getTimeOfDay()}, {firstName}
         </h1>
         <p className="text-slate-400 mt-1">Here is your health overview for today.</p>
       </div>

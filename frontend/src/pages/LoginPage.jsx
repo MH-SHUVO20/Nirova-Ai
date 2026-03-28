@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
+import { extractErrorMessage } from '../utils/api'
 import { FiMail, FiLock, FiArrowRight, FiLoader } from 'react-icons/fi'
 
 export default function LoginPage() {
@@ -20,18 +21,20 @@ export default function LoginPage() {
     e.preventDefault()
     setLoginLoading(true)
     try {
-      await login(form.email, form.password)
+      const email = form.email.trim().toLowerCase()
+      const password = form.password
+      await login(email, password)
       toast.success('Welcome back!')
       navigate('/app', { replace: true })
     } catch (err) {
-      toast.error(err.response?.data?.detail || 'Login failed')
+      toast.error(extractErrorMessage(err) || 'Login failed')
     } finally {
       setLoginLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#0a1628] flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-app flex items-center justify-center px-4 py-8">
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/8 rounded-full blur-3xl" />
       </div>
@@ -45,17 +48,17 @@ export default function LoginPage() {
             </div>
             <span className="font-display font-bold text-white text-2xl">NirovaAI</span>
           </Link>
-          <h2 className="font-display text-3xl font-bold text-white">Welcome back</h2>
-          <p className="text-slate-400 mt-2">Sign in to continue to your health dashboard.</p>
+          <h2 className="font-display text-3xl font-bold text-theme">Welcome back</h2>
+          <p className="text-theme-muted mt-2">Sign in to continue to your health dashboard.</p>
         </div>
 
         {/* Form */}
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+              <label className="block text-sm font-medium text-theme mb-2">Email</label>
               <div className="relative">
-                <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-muted" size={16} />
                 <input
                   type="email"
                   value={form.email}
@@ -68,9 +71,9 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
+              <label className="block text-sm font-medium text-theme mb-2">Password</label>
               <div className="relative">
-                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-muted" size={16} />
                 <input
                   type="password"
                   value={form.password}
@@ -100,7 +103,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-slate-400 text-sm mt-6">
+          <p className="text-center text-theme-muted text-sm mt-6">
             Don't have an account?{' '}
             <Link to="/register" className="text-primary-400 hover:text-primary-300 font-medium">
               Create an account

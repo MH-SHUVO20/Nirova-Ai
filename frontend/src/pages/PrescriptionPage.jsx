@@ -39,10 +39,16 @@ export default function PrescriptionPage() {
     try {
       const res = await visionAPI.analyzePrescription(file)
       setResult(res.data)
+      const a = res.data?.analysis || {}
+      const medsCount = Array.isArray(a.medications) ? a.medications.length : 0
+      const summary = [
+        medsCount ? `medications=${medsCount}` : '',
+        a.clarity_score ? `clarity=${a.clarity_score}` : '',
+        a.follow_up_advice ? `follow_up=${a.follow_up_advice}` : '',
+      ].filter(Boolean).join(', ')
+      window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'prescription', summary } }))
       if (res.data?.context_saved === false) {
         toast.error('Analysis done, but context was not saved to database.')
-      } else {
-        window.dispatchEvent(new CustomEvent('nirovaai:analysis-updated', { detail: { type: 'prescription' } }))
       }
       toast.success('Prescription analysis complete')
     } catch (err) {
@@ -78,7 +84,7 @@ export default function PrescriptionPage() {
         <div className="lg:col-span-2 space-y-4">
           <div className="card">
             <p className="text-white font-semibold mb-2">Step 1: Upload Prescription</p>
-            <p className="text-slate-400 text-sm">Clear photos work best. PDFs are supported too.</p>
+            <p className="text-theme-muted text-sm">Clear photos work best. PDFs are supported too.</p>
 
             <div
               {...getRootProps()}
@@ -89,23 +95,23 @@ export default function PrescriptionPage() {
               }`}
             >
               <input {...getInputProps()} />
-              <FiUpload size={28} className="mx-auto text-slate-500 mb-2" />
+              <FiUpload size={28} className="mx-auto text-theme-muted mb-2" />
               <p className="text-sm text-white">Drop file or click to upload</p>
-              <p className="text-xs text-slate-500 mt-1">JPG, PNG, WEBP, PDF up to 10MB</p>
+              <p className="text-xs text-theme-muted mt-1">JPG, PNG, WEBP, PDF up to 10MB</p>
             </div>
 
             {preview && (
               <div className="mt-4">
-                <img src={preview} alt="Prescription preview" className="w-full rounded-xl bg-slate-900 max-h-52 object-contain" />
-                <p className="text-slate-400 text-xs mt-2 truncate">{file?.name}</p>
+                <img src={preview} alt="Prescription preview" className="w-full rounded-xl bg-theme-soft max-h-52 object-contain" />
+                <p className="text-theme-muted text-xs mt-2 truncate">{file?.name}</p>
               </div>
             )}
 
             {file && !preview && (
-              <div className="mt-4 rounded-xl border border-slate-600 bg-slate-900/60 p-4">
-                <p className="text-slate-300 text-sm">Selected file</p>
+              <div className="mt-4 rounded-xl border border-theme bg-theme-soft p-4">
+                <p className="text-theme text-sm">Selected file</p>
                 <p className="text-white text-sm font-medium mt-1 truncate">{file?.name}</p>
-                <p className="text-slate-500 text-xs mt-1">PDF preview is not shown. Analysis still works.</p>
+                <p className="text-theme-muted text-xs mt-1">PDF preview is not shown. Analysis still works.</p>
               </div>
             )}
 
@@ -121,7 +127,7 @@ export default function PrescriptionPage() {
 
           <div className="card">
             <p className="text-white font-semibold mb-2">Step 2: Verify Before Taking</p>
-            <p className="text-slate-400 text-sm">Always confirm medicine names and doses with your doctor or pharmacist.</p>
+            <p className="text-theme-muted text-sm">Always confirm medicine names and doses with your doctor or pharmacist.</p>
           </div>
         </div>
 
@@ -134,9 +140,9 @@ export default function PrescriptionPage() {
                 className="card h-full min-h-[340px] flex items-center justify-center"
               >
                 <div className="text-center">
-                  <FiClipboard size={34} className="mx-auto text-slate-500 mb-3" />
+                  <FiClipboard size={34} className="mx-auto text-theme-muted mb-3" />
                   <p className="text-white font-medium">No analysis yet</p>
-                  <p className="text-slate-500 text-sm mt-1">Upload and analyze a prescription to view structured output.</p>
+                  <p className="text-theme-muted text-sm mt-1">Upload and analyze a prescription to view structured output.</p>
                 </div>
               </motion.div>
             )}
@@ -145,7 +151,7 @@ export default function PrescriptionPage() {
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                 <div className="grid grid-cols-3 gap-3">
                   <div className="card text-center p-4">
-                    <p className="text-slate-400 text-xs">Medicines Found</p>
+                    <p className="text-theme-muted text-xs">Medicines Found</p>
                     <p className="text-white text-2xl font-bold">{meds.length}</p>
                   </div>
                   <div className="card text-center p-4 border border-red-500/30">
@@ -161,7 +167,7 @@ export default function PrescriptionPage() {
                 <div className="card">
                   <h3 className="text-white font-semibold mb-3">Detected Medicines</h3>
                   {meds.length === 0 ? (
-                    <p className="text-slate-400 text-sm">No medicine data could be extracted clearly.</p>
+                    <p className="text-theme-muted text-sm">No medicine data could be extracted clearly.</p>
                   ) : (
                     <div className="space-y-2">
                       {meds.map((m, i) => (
@@ -170,7 +176,7 @@ export default function PrescriptionPage() {
                           <p className="text-slate-300 text-xs mt-1">
                             {m.strength || 'unknown'} | {m.dose_instruction || 'instruction unclear'} | {m.frequency || 'frequency unclear'} | {m.duration || 'duration unclear'}
                           </p>
-                          {m.purpose && <p className="text-slate-400 text-xs mt-1">Purpose: {m.purpose}</p>}
+                          {m.purpose && <p className="text-theme-muted text-xs mt-1">Purpose: {m.purpose}</p>}
                         </div>
                       ))}
                     </div>
@@ -183,13 +189,13 @@ export default function PrescriptionPage() {
                     Suggested Daily Schedule
                   </h3>
                   {schedule.length === 0 ? (
-                    <p className="text-slate-400 text-sm">No structured schedule could be extracted.</p>
+                    <p className="text-theme-muted text-sm">No structured schedule could be extracted.</p>
                   ) : (
                     <div className="space-y-2">
                       {schedule.map((slot, i) => (
                         <div key={`${slot.time}-${i}`} className="rounded-xl border border-primary-500/30 bg-primary-500/10 p-3">
                           <p className="text-primary-200 text-sm font-semibold capitalize">{slot.time}</p>
-                          <p className="text-slate-200 text-xs mt-1">{(slot.medicines || []).join(', ') || 'No medicine listed'}</p>
+                          <p className="text-theme text-xs mt-1">{(slot.medicines || []).join(', ') || 'No medicine listed'}</p>
                         </div>
                       ))}
                     </div>
@@ -202,7 +208,7 @@ export default function PrescriptionPage() {
                     Safety Notes
                   </h3>
                   {safetyFlags.length === 0 ? (
-                    <p className="text-slate-300 text-sm">No specific safety flags were detected.</p>
+                    <p className="text-theme text-sm">No specific safety flags were detected.</p>
                   ) : (
                     <div className="space-y-1">
                       {safetyFlags.map((flag, i) => (
@@ -211,7 +217,7 @@ export default function PrescriptionPage() {
                     </div>
                   )}
                   {result?.analysis?.follow_up_advice && (
-                    <p className="text-slate-300 text-sm mt-3">Follow-up: {result.analysis.follow_up_advice}</p>
+                    <p className="text-theme text-sm mt-3">Follow-up: {result.analysis.follow_up_advice}</p>
                   )}
                 </div>
               </motion.div>

@@ -9,7 +9,10 @@ This is OPTIONAL — the app works fine without Redis.
 If Redis is unavailable, we just skip the cache.
 """
 
-import redis.asyncio as aioredis
+try:
+    import redis.asyncio as aioredis
+except Exception:  # pragma: no cover - optional dependency guard
+    aioredis = None
 from app.core.config import settings
 import logging
 import json
@@ -27,21 +30,33 @@ async def connect_redis():
     global _redis
 
     try:
+        if aioredis is None:
+            log.warning("Redis python package is not installed; running without Redis cache.")
+            _redis = None
+            return
+
         if settings.UPSTASH_REDIS_URL and settings.UPSTASH_REDIS_TOKEN:
             # Production: Upstash Redis (free tier at upstash.com)
+            upstash_url = settings.UPSTASH_REDIS_URL.strip()
+            if upstash_url.startswith("https://"):
+                upstash_url = "rediss://" + upstash_url[len("https://"):]
+                log.info("Normalized UPSTASH_REDIS_URL from https:// to rediss://")
             _redis = aioredis.from_url(
-                settings.UPSTASH_REDIS_URL,
+                upstash_url,
                 password=settings.UPSTASH_REDIS_TOKEN,
                 decode_responses=True
             )
         elif settings.REDIS_URL:
             # Local development: Redis running in Docker
-            if not settings.REDIS_URL.startswith(("redis://", "rediss://", "unix://")):
-                raise ValueError(
-                    "Redis URL must specify one of the following schemes (redis://, rediss://, unix://)"
-                )
+            redis_url = settings.REDIS_URL.strip()
+            if redis_url and "://" not in redis_url:
+                # Accept host:port format and normalize it for convenience.
+                redis_url = f"redis://{redis_url}"
+                log.info(f"Normalized REDIS_URL to {redis_url}")
+            if not redis_url.startswith(("redis://", "rediss://", "unix://")):
+                raise ValueError("Redis URL must start with redis://, rediss://, or unix://")
             _redis = aioredis.from_url(
-                settings.REDIS_URL,
+                redis_url,
                 decode_responses=True
             )
 

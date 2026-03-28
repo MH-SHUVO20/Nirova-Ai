@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": { "value": "<your-azure-location>" },
+    "env": { "value": "prod" },
+    "tags": { "value": { "environment": "prod", "project": "Nirova-Ai" } },
+    "acrName": { "value": "<your-acr-name>" },
+    "backendName": { "value": "<your-backend-app-name>" },
+    "frontendName": { "value": "<your-frontend-app-name>" },
+    "cosmosdbName": { "value": "<your-cosmosdb-name>" },
+    "redisName": { "value": "<your-redis-name>" },
+    "storageName": { "value": "<your-storage-name>" },
+    "keyVaultName": { "value": "<your-keyvault-name>" },
+    "appInsightsName": { "value": "<your-appinsights-name>" },
+    "tenantId": { "value": "<your-tenant-id>" },
+    "objectIds": { "value": [ "<object-id-1>", "<object-id-2>" ] }
+  }
+}

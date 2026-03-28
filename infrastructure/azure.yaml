@@ -1,0 +1,9 @@
+# Azure deployment configuration for Nirova-Ai
+name: nirova-ai
+metadata:
+  template: main.bicep
+  description: Production-ready Azure Bicep deployment for Nirova-Ai (FastAPI backend, React frontend, Cosmos DB, Redis, Storage, Key Vault, App Insights, ACR)
+  owner: <your-team-or-email>
+parameters:
+  - parameters/dev.parameters.json
+  - parameters/prod.parameters.json

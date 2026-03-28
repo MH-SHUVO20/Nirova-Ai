@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": { "value": "eastus2" },
+    "env": { "value": "prod" },
+    "acrName": { "value": "nirovaacrprod" },
+    "backendName": { "value": "nirovabackendprod" },
+    "frontendName": { "value": "nirovafrontendprod" },
+    "cosmosdbName": { "value": "nirovacosmosprod" },
+    "redisName": { "value": "nirovaredisprod" },
+    "storageName": { "value": "nirovastorageprod" },
+    "keyVaultName": { "value": "nirovakvprod" },
+    "appInsightsName": { "value": "nirovaappinsightsprod" },
+    "tenantId": { "value": "<your-tenant-id>" },
+    "objectIds": { "value": ["<your-admin-object-id>"] }
+  }
+}

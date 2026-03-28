@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
     const loadUser = async () => {
       const savedUser = localStorage.getItem('nirovaai_user')
       try {
-        const res = await authAPI.getMe() // verify with server
+        const res = await authAPI.getMe()
         if (res.data) {
           setUser(res.data)
           localStorage.setItem('nirovaai_user', JSON.stringify(res.data))
@@ -23,22 +23,15 @@ export function AuthProvider({ children }) {
       } catch (err) {
         const status = err?.response?.status
         if (status === 401) {
-          // Token invalid/expired — clear everything
           setUser(null)
           localStorage.removeItem('nirovaai_user')
         } else {
-          // Server error — use cached user as fallback
           if (savedUser) {
-            try {
-              setUser(JSON.parse(savedUser))
-            } catch {
-              setUser(null)
-              localStorage.removeItem('nirovaai_user')
-            }
+            try { setUser(JSON.parse(savedUser)) }
+            catch { setUser(null); localStorage.removeItem('nirovaai_user') }
           } else {
             setUser(null)
           }
-          if (status) toast.error('Server unavailable. Please try again shortly.')
         }
       } finally {
         setLoading(false)

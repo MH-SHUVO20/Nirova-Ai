@@ -9,36 +9,41 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Try to get user from the server on load, which implicitly validates cookie
     const loadUser = async () => {
+      const savedUser = localStorage.getItem('nirovaai_user')
       try {
-        const res = await authAPI.getMe()
+        const res = await authAPI.getMe() // verify with server
         if (res.data) {
           setUser(res.data)
+          localStorage.setItem('nirovaai_user', JSON.stringify(res.data))
+        } else {
+          setUser(null)
+          localStorage.removeItem('nirovaai_user')
         }
       } catch (err) {
-        setUser(null)
-        localStorage.removeItem('nirovaai_user')
         const status = err?.response?.status
-        if (status && status !== 401) {
-          toast.error('Server unavailable. Please try again shortly.')
+        if (status === 401) {
+          // Token invalid/expired — clear everything
+          setUser(null)
+          localStorage.removeItem('nirovaai_user')
+        } else {
+          // Server error — use cached user as fallback
+          if (savedUser) {
+            try {
+              setUser(JSON.parse(savedUser))
+            } catch {
+              setUser(null)
+              localStorage.removeItem('nirovaai_user')
+            }
+          } else {
+            setUser(null)
+          }
+          if (status) toast.error('Server unavailable. Please try again shortly.')
         }
       } finally {
         setLoading(false)
       }
     }
-    
-    // Fallback: Check if we have standard cached user to avoid blink
-    const savedUser = localStorage.getItem('nirovaai_user')
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser))
-      } catch {
-        localStorage.removeItem('nirovaai_user')
-        toast.error('Corrupted user session. Please log in again.')
-      }
-    }
-    
     loadUser()
   }, [])
 

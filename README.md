@@ -1,4 +1,3 @@
-
 # NirovaAI — নিরোভা 🇧🇩
 
 
@@ -362,25 +361,88 @@ FRONTEND_URL=http://localhost:5173
 MONGODB_URI=your_mongo_atlas_connection_string
 MONGODB_DB_NAME=nirovaai
 
-# Auth
-SECRET_KEY=your-random-secret-key
-ACCESS_TOKEN_EXPIRE_MINUTES=10080
-AUTH_COOKIE_NAME=access_token
+## 👤 Author
 
-# AI/ML
-GROQ_API_KEY=gsk_...
-GEMINI_API_KEY=AIzaSy...
-RAG_TOP_K=4
-RAG_CANDIDATE_LIMIT=30
-RAG_KB_MAX_CHARS=2800
+<div align="center">
 
-# Redis
-REDIS_URL=redis://localhost:6379/0
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:1F6FEB,100:58A6FF&height=130&section=header&text=MD.%20MEHEDI%20HASAN%20SHUVO&fontSize=28&fontColor=ffffff&fontAlignY=65&animation=fadeIn" width="100%"/>
 
-# Optional: email (password reset)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-email@gmail.com
+<br/>
+
+<img src="https://github.com/MH-SHUVO20.png" width="110" style="border-radius: 50%; border: 3px solid #1F6FEB;" alt="MD. MEHEDI HASAN SHUVO"/>
+
+<br/><br/>
+
+### 👨‍💻 MD. MEHEDI HASAN SHUVO
+
+<br/>
+
+[![GitHub](https://img.shields.io/badge/GitHub-MH--SHUVO20-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/MH-SHUVO20)
+[![Profile Views](https://komarev.com/ghpvc/?username=MH-SHUVO20&style=for-the-badge&color=1F6FEB&label=PROFILE+VIEWS)](https://github.com/MH-SHUVO20)
+
+<br/>
+
+<table align="center">
+     <tr>
+          <td align="center">🧑‍💼 <b>Role</b></td>
+          <td>Project Owner, Lead Developer</td>
+     </tr>
+     <tr>
+          <td align="center">📊 <b>Project</b></td>
+          <td>NirovaAI — AI-powered Early Disease Detection Platform</td>
+     </tr>
+     <tr>
+          <td align="center">🗓️ <b>Year</b></td>
+          <td>2025-2026</td>
+     </tr>
+     <tr>
+          <td align="center">🛠️ <b>Tech Stack</b></td>
+          <td>Python · FastAPI · React · MongoDB · Azure · Docker · AI/ML</td>
+     </tr>
+     <tr>
+          <td align="center">📍 <b>Platform</b></td>
+          <td>Azure · Docker · GitHub · Vercel</td>
+     </tr>
+</table>
+
+<br/>
+
+> *"AI for healthcare equity — building technology that saves lives and empowers communities."*
+
+<br/>
+
+![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=18&pause=1000&color=58A6FF&center=true&vCenter=true&width=500&lines=AI+Engineer+%7C+Project+Owner;Python+%7C+FastAPI+%7C+React+%7C+Azure;NirovaAI+%7C+2025-2026)
+
+<br/>
+
+![GitHub Streak](https://streak-stats.demolab.com?user=MH-SHUVO20&theme=tokyonight&hide_border=true&ring=58A6FF&fire=1F6FEB&currStreakLabel=58A6FF)
+
+<br/>
+
+---
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:58A6FF,50:1F6FEB,100:0D1117&height=90&section=footer" width="100%"/>
+
+⭐ **If you found this project helpful, please consider giving it a star!**
+
+**Made with ❤️ by [MD. MEHEDI HASAN SHUVO](https://github.com/MH-SHUVO20) — 2025-2026**
+
+</div>
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## 📬 Contact & Support
+
+For questions, feedback, or support, please open an issue on GitHub or contact [MH Shuvo](https://github.com/MH-SHUVO20).
+
+<div align="center">
+<strong>Built for Bangladesh 🇧🇩</strong><br/>
+<em>Because early detection saves lives.</em>
+</div>
 SMTP_PASSWORD=your-app-password
 SMTP_FROM_EMAIL=your-email@gmail.com
 SMTP_USE_TLS=true

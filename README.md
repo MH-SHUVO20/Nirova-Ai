@@ -1,8 +1,3 @@
-## 📑 Documentation
-
-- [Final Report](https://docs.google.com/document/d/18EAp14PDXJyHnaqIcLgNo2S9NDRckopE_1rZGbjKJU0/edit?usp=sharing)
-- [Project Proposal](https://docs.google.com/document/d/1lHR8M3vpf8BGUelYZNe87DpABMs_j7W8iWiebr5IxOw/edit?usp=sharing)
-
 
 # NirovaAI — নিরোভা 🇧🇩
 
@@ -10,16 +5,20 @@
 <strong>Empowering Bangladesh with Accessible, AI-Driven Early Disease Detection</strong>
 </div>
 
-
 <div align="center">
-  
-  [![Live App](https://img.shields.io/badge/🌐%20Live%20App-nirovaai.app-blue?style=for-the-badge)](https://nirovaai.app)
-  [![Stack](https://img.shields.io/badge/stack-React%20%7C%20FastAPI%20%7C%20MongoDB%20%7C%20Azure-06b6d4?style=flat-square&logo=github)](https://github.com/MH-SHUVO20/Nirova-Ai)
-  [![Deployed on Azure](https://img.shields.io/badge/deployed-Azure%20Container%20Apps-0078d4?style=flat-square&logo=microsoftazure)](https://azure.microsoft.com)
-
-  <br>
-  <strong>AI-powered early disease detection platform for Bangladesh 🇧🇩</strong>
+     [![Live App](https://img.shields.io/badge/🌐%20Live%20App-nirovaai.app-blue?style=for-the-badge)](https://nirovaai.app)
+     [![Stack](https://img.shields.io/badge/stack-React%20%7C%20FastAPI%20%7C%20MongoDB%20%7C%20Azure-06b6d4?style=flat-square&logo=github)](https://github.com/MH-SHUVO20/Nirova-Ai)
+     [![Deployed on Azure](https://img.shields.io/badge/deployed-Azure%20Container%20Apps-0078d4?style=flat-square&logo=microsoftazure)](https://azure.microsoft.com)
+     <br>
+     <strong>AI-powered early disease detection platform for Bangladesh 🇧🇩</strong>
 </div>
+
+---
+
+## 📑 Documentation
+
+- [Final Report](https://docs.google.com/document/d/18EAp14PDXJyHnaqIcLgNo2S9NDRckopE_1rZGbjKJU0/edit?usp=sharing)
+- [Project Proposal](https://docs.google.com/document/d/1lHR8M3vpf8BGUelYZNe87DpABMs_j7W8iWiebr5IxOw/edit?usp=sharing)
 
 ---
 
@@ -512,8 +511,7 @@ Docker build (root Dockerfile, multi-stage)
          └─────────────────────────────────┘
 ```
 
-**Live URL:** [https://nirovaai.app](https://nirovaai.app)  
-Screenshots available at [nirovaai.app](https://nirovaai.app)
+**Live URL:** [https://nirovaai.app](https://nirovaai.app)
 
 ---
 

@@ -1,32 +1,66 @@
+## 📑 Documentation
+
+- [Final Report](https://docs.google.com/document/d/18EAp14PDXJyHnaqIcLgNo2S9NDRckopE_1rZGbjKJU0/edit?usp=sharing)
+- [Project Proposal](https://docs.google.com/document/d/1lHR8M3vpf8BGUelYZNe87DpABMs_j7W8iWiebr5IxOw/edit?usp=sharing)
+
+
 # NirovaAI — নিরোভা 🇧🇩
 
 <div align="center">
+<strong>Empowering Bangladesh with Accessible, AI-Driven Early Disease Detection</strong>
+</div>
 
-[![Live App](https://img.shields.io/badge/🌐%20Live%20App-nirovaai.app-blue?style=for-the-badge)](https://nirovaai.app)
-[![Stack](https://img.shields.io/badge/stack-React%20%7C%20FastAPI%20%7C%20MongoDB%20%7C%20Azure-06b6d4?style=flat-square&logo=github)](https://github.com/MH-SHUVO20/Nirova-Ai)
-[![Deployed on Azure](https://img.shields.io/badge/deployed-Azure%20Container%20Apps-0078d4?style=flat-square&logo=microsoftazure)](https://azure.microsoft.com)
-[![CI/CD](https://github.com/MH-SHUVO20/Nirova-Ai/actions/workflows/deploy.yml/badge.svg)](https://github.com/MH-SHUVO20/Nirova-Ai/actions)
 
-**AI-powered early disease detection platform for Bangladesh 🇧🇩**
+<div align="center">
+  
+  [![Live App](https://img.shields.io/badge/🌐%20Live%20App-nirovaai.app-blue?style=for-the-badge)](https://nirovaai.app)
+  [![Stack](https://img.shields.io/badge/stack-React%20%7C%20FastAPI%20%7C%20MongoDB%20%7C%20Azure-06b6d4?style=flat-square&logo=github)](https://github.com/MH-SHUVO20/Nirova-Ai)
+  [![Deployed on Azure](https://img.shields.io/badge/deployed-Azure%20Container%20Apps-0078d4?style=flat-square&logo=microsoftazure)](https://azure.microsoft.com)
 
+  <br>
+  <strong>AI-powered early disease detection platform for Bangladesh 🇧🇩</strong>
 </div>
 
 ---
 
-## 🩺 Problem Definition and Context
+## 🚀 Quick Start
 
-Bangladesh has a severe shortage of doctors—**doctor:patient ratio of 1:2,000**—which means millions cannot get care until symptoms become severe. In rural areas, travel and costs make health access even harder. Dengue outbreaks, diabetes, and treatable conditions often go undiagnosed until it is too late.
-
-**NirovaAI** directly addresses this life-and-death gap by offering accessible, AI-powered early disease risk detection and medical guidance for everyday people in Bangladesh—especially rural, underserved, and Bengali-speaking users.
-
-**Objectives:**
-- Enable **early disease detection** (41+ diseases) and real-time risk alerts
-- Provide explanations and next steps in both Bangla and English
-- Support skin condition analysis, dengue risk, and lab report explanation—with **Bangladesh-specific models**
-- Ensure AI advice is grounded in **official Bangladesh and WHO medical knowledge** (via RAG)
-- **NOT** a substitute for registered physician diagnosis or emergency care
+1. **Clone the repository:**
+     ```bash
+     git clone https://github.com/MH-SHUVO20/Nirova-Ai.git
+     cd Nirova-Ai
+     ```
+2. **Configure environment:**
+     - Copy `.env.example` to `.env` and fill in your secrets.
+3. **Start the stack:**
+     ```bash
+     docker-compose up --build
+     ```
+4. **Access the app:**
+     - Frontend: http://localhost:5173
+     - Backend API: http://localhost:8000
+     - API Docs: http://localhost:8000/docs
 
 ---
+
+---
+
+
+## 🩺 Problem Definition and Context
+
+Bangladesh faces a critical shortage of healthcare professionals, with a **doctor:patient ratio of 1:2,000**. Millions lack timely access to care, especially in rural areas where travel and costs are prohibitive. Diseases like dengue, diabetes, and other treatable conditions often go undiagnosed until advanced stages.
+
+**NirovaAI** bridges this gap by providing accessible, AI-powered early disease risk detection and medical guidance for all, with a focus on rural, underserved, and Bengali-speaking communities.
+
+**Key Objectives:**
+- Enable **early detection** of 41+ diseases and real-time risk alerts
+- Deliver clear explanations and next steps in Bangla and English
+- Support skin condition analysis, dengue risk, and lab report explanation using **Bangladesh-specific models**
+- Ground all AI advice in **official Bangladesh and WHO medical knowledge** (via RAG)
+- **Note:** This platform is **not** a substitute for registered physician diagnosis or emergency care
+
+---
+
 
 ## ✨ Features
 
@@ -46,6 +80,7 @@ Bangladesh has a severe shortage of doctors—**doctor:patient ratio of 1:2,000*
 | 📨 **Password Reset** | Request email reset with optional SMTP configuration |
 
 ---
+
 
 ## 🖥️ Frontend Implementation
 
@@ -68,6 +103,7 @@ Bangladesh has a severe shortage of doctors—**doctor:patient ratio of 1:2,000*
 
 ---
 
+
 ## 🛠️ Backend Implementation
 
 | Technology | Version | Use |
@@ -89,6 +125,7 @@ Bangladesh has a severe shortage of doctors—**doctor:patient ratio of 1:2,000*
 - Admin endpoints: Only accessible if user is admin
 
 ---
+
 
 ## 🧠 AI Integration & Methodology
 
@@ -124,11 +161,9 @@ Bangladesh has a severe shortage of doctors—**doctor:patient ratio of 1:2,000*
 
 **RAG Pipeline**
 - Source PDFs: Bangladesh Ministry of Health, IEDCR, and WHO guides
-- Ingestion: `scripts/ingest_rag.py` splits documents, generates embeddings via sentence-transformers, stores in MongoDB Atlas Vector Search
-- Query flow: User question → vector search on medical knowledge chunks → context injected into Groq LLaMA 3 prompt → LLM response streamed via WebSocket
-- Chosen for hallucination reduction and local relevance: all answers are traceable to trusted Bangladesh-specific medical sources, unlike standard LLM chat
 
 ---
+
 
 ## ⚙️ Full Tech Stack
 
@@ -157,20 +192,21 @@ Bangladesh has a severe shortage of doctors—**doctor:patient ratio of 1:2,000*
 
 ---
 
+
+
 ## 🗂️ Project Structure
 
 ```
 Nirova-Ai/
 │
-├── .github/
-│   └── workflows/
-│       └── deploy.yml          ← GitHub Actions CI/CD pipeline
 ├── backend/
 │   ├── Dockerfile              ← Python 3.11 backend image
 │   ├── requirements.txt        ← Python dependencies (AI, API)
 │   └── app/
 │       ├── main.py             ← FastAPI entry point
+│       ├── __init__.py
 │       ├── api/
+│       │   ├── __init__.py
 │       │   ├── auth.py         ← Register, login, password reset
 │       │   ├── symptoms.py     ← Symptom log, analyze, predict
 │       │   ├── chat.py         ← LLM chat + RAG + WebSocket
@@ -178,21 +214,105 @@ Nirova-Ai/
 │       │   ├── vision.py       ← Skin & lab analysis via Gemini
 │       │   ├── language.py     ← Translation API
 │       │   └── analytics.py    ← Admin usage endpoints
-│       ├── core/               ← Config, DB, auth, Redis utils
-│       ├── ai/                 ← ML pipeline, RAG, LLM interface
-│       └── models/             ← .pkl model files + JSON metadata
+│       ├── core/
+│       │   ├── __init__.py
+│       │   ├── config.py
+│       │   ├── auth.py
+│       │   ├── analytics.py
+│       │   ├── errors.py
+│       │   ├── database.py
+│       │   ├── language_detector.py
+│       │   ├── monitoring.py
+│       │   ├── rate_limit.py
+│       │   ├── redis_client.py
+│       │   └── translations.py
+│       ├── ai/
+│       │   ├── __init__.py
+│       │   ├── llm_router.py
+│       │   ├── agents/
+│       │   │   ├── __init__.py
+│       │   │   └── langgraph_orchestrator.py
+│       │   ├── ml/
+│       │   │   ├── __init__.py
+│       │   │   ├── dengue_model.py
+│       │   │   └── disease_model.py
+│       │   ├── rag/
+│       │   │   ├── __init__.py
+│       │   │   ├── embedder.py
+│       │   │   └── retriever.py
+│       │   └── vision/
+│       │       ├── __init__.py
+│       │       └── skin_model.py
+│       ├── models/
+│       │   ├── class_names.json
+│       │   ├── dengue_feature_columns.json
+│       │   ├── dengue_model_eval.json
+│       │   ├── disease_model_eval.json
+│       │   ├── symptom_columns.json
+│       │   ├── disease_classifier.pkl
+│       │   ├── dengue_classifier.pkl
+│       │   └── disease_label_encoder.pkl
+│       └── tasks/
+│           ├── __init__.py
+│           └── health_timeline.py
 ├── frontend/
 │   ├── Dockerfile              ← Nginx + Vite build
 │   ├── package.json
 │   ├── vite.config.js
+│   ├── index.html
+│   ├── nginx.conf
+│   ├── postcss.config.js
+│   ├── tailwind.config.js
+│   ├── vercel.json
 │   └── src/
-│       ├── components/         ← Shared UI components
-│       ├── pages/              ← Page-level views
-│       ├── context/            ← Auth state (React Context)
-│       └── utils/              ← API layer, helpers
+│       ├── App.jsx
+│       ├── main.jsx
+│       ├── index.css
+│       ├── components/
+│       │   ├── EmergencyHospitals.jsx
+│       │   ├── ErrorBoundary.jsx
+│       │   ├── GlobalChatWidget.jsx
+│       │   ├── LanguageSelector.jsx
+│       │   └── Layout.jsx
+│       ├── context/
+│       │   ├── AuthContext.jsx
+│       │   ├── LanguageContext.jsx
+│       │   └── ThemeContext.jsx
+│       ├── pages/
+│       │   ├── ChatPage.jsx
+│       │   ├── DashboardPage.jsx
+│       │   ├── DenguePage.jsx
+│       │   ├── ForgotPasswordPage.jsx
+│       │   ├── LabReportPage.jsx
+│       │   ├── LandingPage.jsx
+│       │   ├── LoginPage.jsx
+│       │   ├── PrescriptionPage.jsx
+│       │   ├── RegisterPage.jsx
+│       │   ├── ResetPasswordPage.jsx
+│       │   ├── SkinPage.jsx
+│       │   ├── SymptomsPage.jsx
+│       │   └── TimelinePage.jsx
+│       └── utils/
+│           ├── api.js
+│           └── location.js
 ├── infrastructure/
+│   ├── azure.yaml
 │   ├── main.bicep              ← Azure Container Apps IaC
-│   └── modules/                ← Bicep submodules
+│   ├── parameters.prod.json
+│   ├── README.md
+│   ├── modules/
+│   │   ├── acr.bicep
+│   │   ├── appinsights.bicep
+│   │   ├── cosmosdb.bicep
+│   │   ├── keyvault.bicep
+│   │   ├── privateendpoints.bicep
+│   │   ├── redis.bicep
+│   │   ├── storage.bicep
+│   │   ├── webapp_backend.bicep
+│   │   └── webapp_frontend.bicep
+│   └── parameters/
+│       ├── dev.parameters.json
+│       └── prod.parameters.json
 ├── scripts/
 │   ├── ingest_rag.py           ← Load medical PDFs into MongoDB Vector Search
 │   └── smoke_apis.ps1          ← Post-deploy API smoke tests
@@ -202,6 +322,7 @@ Nirova-Ai/
 ```
 
 ---
+
 
 ## 🖥️ Local Development Setup
 
@@ -280,6 +401,7 @@ python scripts/ingest_rag.py
 
 ---
 
+
 ## 🗃️ API Reference
 
 ### Auth
@@ -335,6 +457,7 @@ python scripts/ingest_rag.py
 
 ---
 
+
 ## 🚀 Deployment — Single Container on Azure
 
 NirovaAI ships as **one Docker container** serving everything on port 8000:
@@ -343,15 +466,14 @@ NirovaAI ships as **one Docker container** serving everything on port 8000:
 - **Stage 2** (`python:3.11-slim`): installs Python + ML deps, copies backend, copies `dist/` into FastAPI `/static`
 - One container, one port — frontend SPA and API both served by FastAPI
 
-### CI/CD Pipeline (GitHub Actions → Docker Hub → Azure)
+
+### CI/CD Pipeline (Docker Hub → Azure)
 
 ```
 Push to main
      │
      ▼
-GitHub Actions (.github/workflows/deploy.yml)
-     │
-     ├── docker build (root Dockerfile, multi-stage)
+Docker build (root Dockerfile, multi-stage)
      │
      ├── docker push → Docker Hub (mh-shuvo20/nirovaai:latest)
      │
@@ -395,15 +517,17 @@ Screenshots available at [nirovaai.app](https://nirovaai.app)
 
 ---
 
-## 📝 Git/GitHub Usage
+
+
+## 📝 Repo Usage
 
 - Monorepo structure: `frontend/`, `backend/`, `infrastructure/`, `scripts/`
 - All API and ML code in repo — no opaque binaries
 - Descriptive commit messages (feature/fix convention), squash merges for clarity
-- Single deploy pipeline per push tracked in `.github/workflows/deploy.yml`
-- Pull request reviews enabled for all changes
+- CI/CD handled via Docker Hub builds and Azure Container Apps
 
 ---
+
 
 ## 💡 Innovation & Impact
 
@@ -416,6 +540,7 @@ Screenshots available at [nirovaai.app](https://nirovaai.app)
 
 ---
 
+
 ## 📝 Disclaimer
 
 > **NirovaAI is for informational support only.**  
@@ -427,12 +552,24 @@ Screenshots available at [nirovaai.app](https://nirovaai.app)
 
 ---
 
+
 ## 👤 Author
 
 **MH Shuvo** — BSc Computer Science Capstone Project  
 [GitHub: @MH-SHUVO20](https://github.com/MH-SHUVO20)
 
 ---
+
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## 📬 Contact & Support
+
+For questions, feedback, or support, please open an issue on GitHub or contact [MH Shuvo](https://github.com/MH-SHUVO20).
 
 <div align="center">
 <strong>Built for Bangladesh 🇧🇩</strong><br/>

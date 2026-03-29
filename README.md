@@ -1,15 +1,24 @@
 
 # NirovaAI — নিরোভা 🇧🇩
 
-<div align="center">
-<strong>Empowering Bangladesh with Accessible, AI-Driven Early Disease Detection</strong>
-</div>
 
 <div align="center">
-     [![Live App](https://img.shields.io/badge/🌐%20Live%20App-nirovaai.app-blue?style=for-the-badge)](https://nirovaai.app)
-     [![Stack](https://img.shields.io/badge/stack-React%20%7C%20FastAPI%20%7C%20MongoDB%20%7C%20Azure-06b6d4?style=flat-square&logo=github)](https://github.com/MH-SHUVO20/Nirova-Ai)
-     [![Deployed on Azure](https://img.shields.io/badge/deployed-Azure%20Container%20Apps-0078d4?style=flat-square&logo=microsoftazure)](https://azure.microsoft.com)
-     <br>
+     <strong>Empowering Bangladesh with Accessible, AI-Driven Early Disease Detection</strong>
+</div>
+
+<p align="center">
+     <a href="https://nirovaai.app">
+          <img src="https://img.shields.io/badge/🌐%20Live%20App-nirovaai.app-blue?style=for-the-badge" alt="Live App" />
+     </a>
+     <a href="https://github.com/MH-SHUVO20/Nirova-Ai">
+          <img src="https://img.shields.io/badge/stack-React%20%7C%20FastAPI%20%7C%20MongoDB%20%7C%20Azure-06b6d4?style=flat-square&logo=github" alt="Stack" />
+     </a>
+     <a href="https://azure.microsoft.com">
+          <img src="https://img.shields.io/badge/deployed-Azure%20Container%20Apps-0078d4?style=flat-square&logo=microsoftazure" alt="Deployed on Azure" />
+     </a>
+</p>
+
+<div align="center">
      <strong>AI-powered early disease detection platform for Bangladesh 🇧🇩</strong>
 </div>
 

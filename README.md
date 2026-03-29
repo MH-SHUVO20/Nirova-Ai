@@ -361,27 +361,23 @@ FRONTEND_URL=http://localhost:5173
 MONGODB_URI=your_mongo_atlas_connection_string
 MONGODB_DB_NAME=nirovaai
 
+
 ## 👤 Author
 
 <div align="center">
-
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:1F6FEB,100:58A6FF&height=130&section=header&text=MD.%20MEHEDI%20HASAN%20SHUVO&fontSize=28&fontColor=ffffff&fontAlignY=65&animation=fadeIn" width="100%"/>
-
 <br/>
-
 <img src="https://github.com/MH-SHUVO20.png" width="110" style="border-radius: 50%; border: 3px solid #1F6FEB;" alt="MD. MEHEDI HASAN SHUVO"/>
-
 <br/><br/>
-
-### 👨‍💻 MD. MEHEDI HASAN SHUVO
-
+👨‍💻 MD. MEHEDI HASAN SHUVO
 <br/>
-
-[![GitHub](https://img.shields.io/badge/GitHub-MH--SHUVO20-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/MH-SHUVO20)
-[![Profile Views](https://komarev.com/ghpvc/?username=MH-SHUVO20&style=for-the-badge&color=1F6FEB&label=PROFILE+VIEWS)](https://github.com/MH-SHUVO20)
-
+<a href="https://github.com/MH-SHUVO20">
+     <img src="https://img.shields.io/badge/GitHub-MH--SHUVO20-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+</a>
+<a href="https://github.com/MH-SHUVO20">
+     <img src="https://komarev.com/ghpvc/?username=MH-SHUVO20&style=for-the-badge&color=1F6FEB&label=PROFILE+VIEWS" alt="Profile Views">
+</a>
 <br/>
-
 <table align="center">
      <tr>
           <td align="center">🧑‍💼 <b>Role</b></td>
@@ -404,29 +400,18 @@ MONGODB_DB_NAME=nirovaai
           <td>Azure · Docker · GitHub · Vercel</td>
      </tr>
 </table>
-
 <br/>
-
-> *"AI for healthcare equity — building technology that saves lives and empowers communities."*
-
+<em>"AI for healthcare equity — building technology that saves lives and empowers communities."</em>
 <br/>
-
-![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&size=18&pause=1000&color=58A6FF&center=true&vCenter=true&width=500&lines=AI+Engineer+%7C+Project+Owner;Python+%7C+FastAPI+%7C+React+%7C+Azure;NirovaAI+%7C+2025-2026)
-
+<img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&size=18&pause=1000&color=58A6FF&center=true&vCenter=true&width=500&lines=AI+Engineer+|+Project+Owner;Python+|+FastAPI+|+React+|+Azure;NirovaAI+|+2025-2026" alt="Typing SVG">
 <br/>
-
-![GitHub Streak](https://streak-stats.demolab.com?user=MH-SHUVO20&theme=tokyonight&hide_border=true&ring=58A6FF&fire=1F6FEB&currStreakLabel=58A6FF)
-
+<img src="https://streak-stats.demolab.com/?user=MH-SHUVO20&theme=tokyonight&hide_border=true&ring=58A6FF&fire=1F6FEB&currStreakLabel=58A6FF" alt="GitHub Streak">
 <br/>
-
----
-
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:58A6FF,50:1F6FEB,100:0D1117&height=90&section=footer" width="100%"/>
-
-⭐ **If you found this project helpful, please consider giving it a star!**
-
-**Made with ❤️ by [MD. MEHEDI HASAN SHUVO](https://github.com/MH-SHUVO20) — 2025-2026**
-
+<br/>
+⭐ If you found this project helpful, please consider giving it a star!
+<br/>
+Made with ❤️ by MD. MEHEDI HASAN SHUVO — 2025-2026
 </div>
 
 ---

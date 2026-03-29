@@ -1,16 +1,20 @@
 
 
+
 # NirovaAI — নিরোভা 🇧🇩
 
-
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:1F6FEB,100:58A6FF&height=130&section=header&text=NirovaAI&fontSize=38&fontColor=ffffff&fontAlignY=65&animation=fadeIn" width="100%"/>
-     <h3>AI-Powered Early Disease Detection for Bangladesh</h3>
-     <p><b>Delivering accessible, reliable, and AI-driven medical guidance and early disease risk detection for rural, underserved, and Bengali-speaking communities.</b></p>
+     <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:1F6FEB,100:58A6FF&height=130&section=header&text=NirovaAI&fontSize=38&fontColor=ffffff&fontAlignY=65&animation=fadeIn" width="100%"/>
+     <h3>AI-powered Early Disease Detection Platform for Bangladesh</h3>
+     <p><b>Empowering rural, underserved, and Bengali-speaking communities with accessible, AI-driven medical guidance and early disease risk detection.</b></p>
 </div>
 
----
-
+<div align="center">
+     <a href="https://nirovaai.app"><img src="https://img.shields.io/badge/🌐%20Live%20App-nirovaai.app-blue?style=for-the-badge" alt="Live App"/></a>
+     <a href="https://github.com/MH-SHUVO20/Nirova-Ai"><img src="https://img.shields.io/badge/stack-React%20%7C%20FastAPI%20%7C%20MongoDB%20%7C%20Azure-06b6d4?style=flat-square&logo=github" alt="Stack"/></a>
+     <a href="https://azure.microsoft.com"><img src="https://img.shields.io/badge/deployed-Azure%20Container%20Apps-0078d4?style=flat-square&logo=microsoftazure" alt="Azure"/></a>
+     <a href="https://github.com/MH-SHUVO20/Nirova-Ai/actions"><img src="https://github.com/MH-SHUVO20/Nirova-Ai/actions/workflows/deploy.yml/badge.svg" alt="CI/CD"/></a>
+</div>
 
 ---
 

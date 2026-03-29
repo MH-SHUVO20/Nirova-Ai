@@ -1,61 +1,60 @@
+## 👤 Author
+
+<div align="center">
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0D1117,50:1F6FEB,100:58A6FF&height=130&section=header&text=MD.%20MEHEDI%20HASAN%20SHUVO&fontSize=28&fontColor=ffffff&fontAlignY=65&animation=fadeIn" width="100%"/>
+<br/>
+<img src="https://github.com/MH-SHUVO20.png" width="110" style="border-radius: 50%; border: 3px solid #1F6FEB;" alt="MD. MEHEDI HASAN SHUVO"/>
+<br/><br/>
+👨‍💻 MD. MEHEDI HASAN SHUVO
+<br/>
+<a href="https://github.com/MH-SHUVO20">
+     <img src="https://img.shields.io/badge/GitHub-MH--SHUVO20-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+</a>
+<a href="https://github.com/MH-SHUVO20">
+     <img src="https://komarev.com/ghpvc/?username=MH-SHUVO20&style=for-the-badge&color=1F6FEB&label=PROFILE+VIEWS" alt="Profile Views">
+</a>
+<br/>
+<table align="center">
+     <tr>
+          <td align="center">🧑‍💼 <b>Role</b></td>
+          <td>Project Owner, Lead Developer</td>
+     </tr>
+     <tr>
+          <td align="center">📊 <b>Project</b></td>
+          <td>NirovaAI — AI-powered Early Disease Detection Platform</td>
+     </tr>
+     <tr>
+          <td align="center">🗓️ <b>Year</b></td>
+          <td>2025-2026</td>
+     </tr>
+     <tr>
+          <td align="center">🛠️ <b>Tech Stack</b></td>
+          <td>Python · FastAPI · React · MongoDB · Azure · Docker · AI/ML</td>
+     </tr>
+     <tr>
+          <td align="center">📍 <b>Platform</b></td>
+          <td>Azure · Docker · GitHub · Vercel</td>
+     </tr>
+</table>
+<br/>
+<em>"AI for healthcare equity — building technology that saves lives and empowers communities."</em>
+<br/>
+<img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&size=18&pause=1000&color=58A6FF&center=true&vCenter=true&width=500&lines=AI+Engineer+|+Project+Owner;Python+|+FastAPI+|+React+|+Azure;NirovaAI+|+2025-2026" alt="Typing SVG">
+<br/>
+<img src="https://streak-stats.demolab.com/?user=MH-SHUVO20&theme=tokyonight&hide_border=true&ring=58A6FF&fire=1F6FEB&currStreakLabel=58A6FF" alt="GitHub Streak">
+<br/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:58A6FF,50:1F6FEB,100:0D1117&height=90&section=footer" width="100%"/>
+<br/>
+⭐ If you found this project helpful, please consider giving it a star!
+<br/>
+Made with ❤️ by MD. MEHEDI HASAN SHUVO — 2025-2026
+</div>
 # NirovaAI — নিরোভা 🇧🇩
 
 
-<div align="center">
-     <strong>Empowering Bangladesh with Accessible, AI-Driven Early Disease Detection</strong>
-</div>
-
-<p align="center">
-     <a href="https://nirovaai.app">
-          <img src="https://img.shields.io/badge/🌐%20Live%20App-nirovaai.app-blue?style=for-the-badge" alt="Live App" />
-     </a>
-     <a href="https://github.com/MH-SHUVO20/Nirova-Ai">
-          <img src="https://img.shields.io/badge/stack-React%20%7C%20FastAPI%20%7C%20MongoDB%20%7C%20Azure-06b6d4?style=flat-square&logo=github" alt="Stack" />
-     </a>
-     <a href="https://azure.microsoft.com">
-          <img src="https://img.shields.io/badge/deployed-Azure%20Container%20Apps-0078d4?style=flat-square&logo=microsoftazure" alt="Deployed on Azure" />
-     </a>
-</p>
-
-<div align="center">
-     <strong>AI-powered early disease detection platform for Bangladesh 🇧🇩</strong>
-</div>
-
----
-
-## 📑 Documentation
-
-- [Final Report](https://docs.google.com/document/d/18EAp14PDXJyHnaqIcLgNo2S9NDRckopE_1rZGbjKJU0/edit?usp=sharing)
-- [Project Proposal](https://docs.google.com/document/d/1lHR8M3vpf8BGUelYZNe87DpABMs_j7W8iWiebr5IxOw/edit?usp=sharing)
-
----
-
-## 🚀 Quick Start
-
-1. **Clone the repository:**
-     ```bash
-     git clone https://github.com/MH-SHUVO20/Nirova-Ai.git
-     cd Nirova-Ai
-     ```
-2. **Configure environment:**
-     - Copy `.env.example` to `.env` and fill in your secrets.
-3. **Start the stack:**
-     ```bash
-     docker-compose up --build
-     ```
-4. **Access the app:**
-     - Frontend: http://localhost:5173
-     - Backend API: http://localhost:8000
-     - API Docs: http://localhost:8000/docs
-
----
-
----
-
-
-## 🩺 Problem Definition and Context
-
-Bangladesh faces a critical shortage of healthcare professionals, with a **doctor:patient ratio of 1:2,000**. Millions lack timely access to care, especially in rural areas where travel and costs are prohibitive. Diseases like dengue, diabetes, and other treatable conditions often go undiagnosed until advanced stages.
+# MongoDB
+MONGODB_URI=your_mongo_atlas_connection_string
+MONGODB_DB_NAME=nirovaai
 
 **NirovaAI** bridges this gap by providing accessible, AI-powered early disease risk detection and medical guidance for all, with a focus on rural, underserved, and Bengali-speaking communities.
 

@@ -1,12 +1,7 @@
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
-const envBaseUrl = (import.meta.env.VITE_API_URL || '').trim()
-const localHosts = new Set(['localhost', '127.0.0.1', '0.0.0.0'])
-const runningLocally = typeof window !== 'undefined' && localHosts.has(window.location.hostname)
-
-// In local dev, force same-origin /api to keep auth cookies first-party.
-const BASE_URL = runningLocally ? '/api' : (envBaseUrl || '/api')
+const BASE_URL = '/api'
 const isAuthEndpoint = (url = '') => {
   return typeof url === 'string' && url.startsWith('/auth/')
 }

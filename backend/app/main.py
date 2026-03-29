@@ -139,8 +139,7 @@ This service is for informational support only and does not replace professional
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins_list,
-    allow_origin_regex=settings.CORS_ORIGIN_REGEX,
+    allow_origins=["https://nirova-ai-9f4u.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -203,30 +202,10 @@ app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-app.include_router(auth.router)
-app.include_router(symptoms.router)
-app.include_router(chat.router)
-app.include_router(health.router)
-app.include_router(vision.router)
-app.include_router(language.router)
-app.include_router(analytics.router)
 
-@app.get("/", tags=["Status"])
-async def home():
-    """API welcome endpoint"""
-    return {
-        "name": "NirovaAI",
-        "tagline": "Early Disease Detection for Bangladesh",
-        "version": "1.0.0",
-        "status": "running",
-        "docs": "/docs",
-        "health_check": "/health"
-    }
-
-
+# ── Keep these routes BEFORE static files ──
 @app.get("/health", tags=["Status"])
 async def health_check():
-    """Health check for deployment (Render, Azure, etc.)"""
     mongo_connected = bool(getattr(app.state, "mongo_connected", False))
     return {
         "status": "healthy",
@@ -234,4 +213,32 @@ async def health_check():
         "mode": "normal" if mongo_connected else "degraded",
         "mongo_connected": mongo_connected,
     }
+
+# ── Routers with /api prefix ──
+app.include_router(auth.router, prefix="/api")
+app.include_router(symptoms.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
+app.include_router(health.router, prefix="/api")
+app.include_router(vision.router, prefix="/api")
+app.include_router(language.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api")
+
+# ── Serve React Frontend — MUST BE LAST ──
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+if os.path.exists("static"):
+    # Serve static assets (JS, CSS, images)
+    app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        # Let API and docs routes pass through
+        skip_exact = ["docs", "redoc", "openapi.json", "health"]
+        skip_prefix = ["api/"]
+        if full_path in skip_exact or any(full_path.startswith(s) for s in skip_prefix):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404)
+        return FileResponse("static/index.html")
 

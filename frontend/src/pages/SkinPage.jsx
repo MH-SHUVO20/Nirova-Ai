@@ -19,11 +19,12 @@ export default function SkinPage() {
     }
   }, [])
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: { 'image/*': ['.jpg', '.jpeg', '.png', '.webp'] },
     maxSize: 10 * 1024 * 1024,
-    multiple: false
+    multiple: false,
+    noClick: true, // We'll handle click manually for better mobile support
   })
 
   const analyze = async () => {
@@ -78,28 +79,46 @@ export default function SkinPage() {
       </div>
 
       {/* Drop zone */}
+
       {!preview ? (
         <div {...getRootProps()}
-          className={`card border-2 border-dashed cursor-pointer transition-all text-center py-16 ${
+          className={`card border-2 border-dashed cursor-pointer transition-all text-center py-12 sm:py-16 ${
             isDragActive
               ? 'border-primary-500 bg-primary-500/5'
               : 'border-slate-600 hover:border-primary-500/50 hover:bg-slate-700/30'
           }`}>
-          <input {...getInputProps()} />
-          <FiUpload size={40} className="text-theme-muted mx-auto mb-4" />
-          <p className="text-white font-medium mb-1">
-            {isDragActive ? 'Release to upload' : 'Drop a file here or click to upload'}
-          </p>
-          <p className="text-theme-muted text-sm">
-            JPG, PNG, WEBP up to 10MB
-          </p>
-          <p className="text-theme-muted text-xs mt-2">Use a clear, well-lit close-up image for best results.</p>
+          {/* File input for mobile, with capture for camera */}
+          <input
+            {...getInputProps({
+              capture: 'environment',
+              style: { display: 'block', width: '1px', height: '1px', opacity: 0, position: 'absolute' },
+            })}
+          />
+          <button
+            type="button"
+            className="w-full h-full flex flex-col items-center justify-center focus:outline-none"
+            style={{ background: 'transparent' }}
+            onClick={open}
+          >
+            <FiUpload size={40} className="text-theme-muted mx-auto mb-4" />
+            <p className="text-white font-medium mb-1">
+              {isDragActive ? 'Release to upload' : 'Drop a file here or tap to upload'}
+            </p>
+            <p className="text-theme-muted text-sm">
+              JPG, PNG, WEBP up to 10MB
+            </p>
+            <p className="text-theme-muted text-xs mt-2">Use a clear, well-lit close-up image for best results.</p>
+          </button>
         </div>
       ) : (
         <div className="card mb-4">
-          <div className="relative">
-            <img src={preview} alt="Uploaded"
-              className="w-full max-h-64 object-contain rounded-xl bg-theme-soft" />
+          <div className="relative flex flex-col items-center justify-center">
+            <img
+              src={preview}
+              alt="Uploaded preview"
+              className="w-full max-h-64 object-contain rounded-xl bg-theme-soft border border-slate-700"
+              style={{ maxWidth: '100%', display: 'block' }}
+            />
             <button onClick={reset}
               className="absolute top-2 right-2 bg-theme-soft/80 hover:bg-red-500/80 text-white w-8 h-8 rounded-full flex items-center justify-center transition-all">
               ✕

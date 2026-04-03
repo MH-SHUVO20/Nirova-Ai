@@ -86,7 +86,7 @@ export default function LandingPage() {
       </div>
 
       {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+      <nav className="relative z-10 flex flex-col sm:flex-row items-center justify-between px-4 sm:px-8 py-4 sm:py-6 max-w-7xl mx-auto gap-4 sm:gap-0">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center">
             <span className="text-white font-display font-bold">N</span>
@@ -115,7 +115,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative z-10 max-w-7xl mx-auto px-8 pt-20 pb-24 text-center">
+      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 pt-12 sm:pt-20 pb-16 sm:pb-24 text-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -128,19 +128,19 @@ export default function LandingPage() {
           </div>
 
           {/* Headline */}
-          <h1 className="font-display text-6xl md:text-7xl font-bold text-theme leading-tight mb-6">
+          <h1 className="font-display text-3xl xs:text-4xl sm:text-6xl md:text-7xl font-bold text-theme leading-tight mb-6">
             Earlier Insight,
             <br />
             <span className="gradient-text">Better Health Decisions</span>
           </h1>
 
-          <p className="text-theme-muted text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-theme-muted text-base sm:text-xl max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
             NirovaAI is a primary-level health AI assistant that helps you monitor symptoms,
             assess risk for dengue and other common conditions,
             and receive practical guidance to support timely clinical care.
           </p>
 
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <Link to="/register"
               className="btn-primary flex items-center gap-2 text-base px-8 py-4">
               Start Tracking Free
@@ -158,21 +158,21 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
-          className="grid grid-cols-4 gap-6 max-w-3xl mx-auto mt-20"
+          className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 max-w-3xl mx-auto mt-10 sm:mt-20"
         >
           {stats.map((stat) => (
             <div key={stat.label} className="text-center">
-              <div className="font-display text-3xl font-bold text-primary-400 mb-1">
+              <div className="font-display text-2xl sm:text-3xl font-bold text-primary-400 mb-1">
                 {stat.value}
               </div>
-              <div className="text-theme-muted text-sm">{stat.label}</div>
+              <div className="text-theme-muted text-xs sm:text-sm">{stat.label}</div>
             </div>
           ))}
         </motion.div>
       </section>
 
       {/* Features */}
-      <section className="relative z-10 max-w-7xl mx-auto px-8 pb-24">
+      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-8 pb-16 sm:pb-24">
         <div className="text-center mb-16">
           <h2 className="font-display text-4xl font-bold text-theme mb-4">
             What You Can Use Right Now
@@ -182,7 +182,7 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
           {features.map((feature, i) => (
             <motion.div
               key={feature.title}
@@ -206,9 +206,9 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-theme px-8 py-8 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between">
-          <p className="text-theme-muted text-sm">
+      <footer className="relative z-10 border-t border-theme px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-0">
+          <p className="text-theme-muted text-xs sm:text-sm">
             © 2026 NirovaAI — Built for Bangladesh
           </p>
           <p className="text-theme-muted text-xs">

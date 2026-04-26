@@ -2,18 +2,16 @@
 Language preference management and translation API endpoints
 NirovaAI BD Edition - Bangla-focused with regional dialect support
 """
-from fastapi import APIRouter, Depends, Header, Query, Body
+from fastapi import APIRouter, Depends, Header, Query
 from typing import Optional, Dict, List, Any
 from pydantic import BaseModel, Field
 import logging
 from datetime import datetime
 
 from app.core.auth import get_current_user
-from app.core.translations import TranslationService, Language, translation_service
+from app.core.translations import Language, translation_service
 from app.core.language_detector import (
-    LanguageDetector, 
-    language_detector, 
-    LanguageContext
+    language_detector
 )
 from app.core.database import get_db
 

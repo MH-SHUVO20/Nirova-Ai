@@ -6,7 +6,6 @@ Optimized for Bangladesh with Bangla as primary language
 from typing import Optional
 import logging
 from enum import Enum
-from textblob import TextBlob
 import re
 
 log = logging.getLogger(__name__)
@@ -85,8 +84,6 @@ class LanguageDetector:
         """
         if not text or len(text) < 5:
             return None
-        
-        text_lower = text.lower()
         
         # Count Bengali unicode range characters (Bengali script: U+0980 to U+09FF)
         bengali_char_count = sum(1 for char in text if '\u0980' <= char <= '\u09FF')

@@ -21,12 +21,11 @@ Medical Safety:
 - No medical data is ever exposed in error messages
 """
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Request, Query, status
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Request, Query
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from app.core.database import chat_sessions, vision_analyses, symptom_analyses
-from app.core.auth import get_current_user, decode_token
-from app.core.errors import ValidationError, AIProviderError
+from app.core.auth import get_current_user
 from app.ai.llm_router import (
     get_llm_response,
     stream_llm_response,

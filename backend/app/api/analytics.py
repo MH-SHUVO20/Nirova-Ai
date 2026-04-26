@@ -2,20 +2,13 @@
 Analytics API endpoints for health insights dashboard
 """
 from fastapi import APIRouter, Depends, Query
-from typing import Optional
 from datetime import datetime, timedelta
 import logging
 
 from app.core.auth import get_current_user
 from app.core.database import get_db
 from app.core.analytics import (
-    HealthAnalyticsEngine,
     health_analytics,
-    HealthMetricsRequest,
-    HealthRiskProfile,
-    HealthTrendAnalysis,
-    PersonalizedInsight,
-    HealthInsightDashboard,
     HealthRiskLevel
 )
 

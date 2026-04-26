@@ -5,7 +5,7 @@ Centralized error handling, structured logging, and safe fallback responses.
 Critical for AI-based medical application safety and debuggability.
 """
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from typing import Optional, Dict, Any
 import logging
 from datetime import datetime, timezone

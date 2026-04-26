@@ -5,8 +5,6 @@ Optimized for Bangladesh healthcare context
 """
 from typing import Dict, Optional, List
 from enum import Enum
-import json
-from datetime import datetime
 import logging
 
 log = logging.getLogger(__name__)

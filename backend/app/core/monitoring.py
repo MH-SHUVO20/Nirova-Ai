@@ -5,7 +5,7 @@ Production-ready error tracking, health monitoring, and safe defaults.
 """
 
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any
 import logging
 import json
 from collections import defaultdict
@@ -39,7 +39,6 @@ class ErrorMonitor:
         if len(_error_timestamps[error_code]) > MAX_ERRORS_TRACKED_PER_TYPE:
             _error_timestamps[error_code] = _error_timestamps[error_code][-MAX_ERRORS_TRACKED_PER_TYPE:]
         
-        log_level = logging.WARNING if severity in ["warning", "error"] else logging.ERROR if severity == "critical" else logging.INFO
         logger = log
         getattr(logger, {
             "info": "info",

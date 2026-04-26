@@ -1,10 +1,14 @@
 # Disease prediction model using XGBoost
 
-import numpy as np
+import asyncio
 import json
-import os
 import logging
+import os
 from typing import List
+
+import numpy as np
+
+from app.ai.llm_router import get_llm_response
 
 log = logging.getLogger(__name__)
 
@@ -57,9 +61,6 @@ def load_disease_model():
     log.info(f"Disease model loaded: {len(_class_names)} diseases")
 
 
-
-from app.ai.llm_router import get_llm_response
-import asyncio
 
 def predict_disease(symptoms: List[str]) -> dict:
     """Predict disease from list of symptoms"""

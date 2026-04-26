@@ -10,7 +10,6 @@ from bson import ObjectId
 from app.core.database import (
     symptom_logs,
     timeline,
-    symptom_analyses,
 )
 import logging
 

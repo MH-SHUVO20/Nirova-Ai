@@ -13,7 +13,6 @@ from app.core.auth import hash_password, verify_password, create_token, get_curr
 from app.core.config import settings
 from app.core.redis_client import is_rate_limited
 from datetime import datetime, timedelta, timezone
-from bson import ObjectId
 import secrets
 import hashlib
 import smtplib

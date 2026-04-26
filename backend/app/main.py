@@ -2,9 +2,11 @@
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import logging
+import os
 import time
 
 from app.core.config import settings
@@ -17,9 +19,6 @@ from app.ai.rag.embedder import load_embedder
 from app.core.errors import (
     NirovaError,
     RequestLogger,
-    http_exception,
-    DatabaseError,
-    AIProviderError,
 )
 
 from app.api import auth, symptoms, chat, health, vision, language, analytics
@@ -237,9 +236,6 @@ app.include_router(language.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
 
 # ── Serve React Frontend — MUST BE LAST ──
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-import os
 
 if os.path.exists("static"):
     # Serve static assets (JS, CSS, images)

@@ -3,8 +3,8 @@ Advanced Analytics & Health Insights Engine for NirovaAI BD Edition
 Provides comprehensive health trend analysis, risk scoring, and actionable insights
 Optimized for Bangladesh healthcare context and common tropical diseases
 """
-from typing import Dict, List, Optional, Tuple, Any
-from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any
+from datetime import datetime
 from enum import Enum
 import statistics
 import logging
@@ -442,7 +442,7 @@ class HealthAnalyticsEngine:
                     action_items=[
                         f"Schedule appointment to discuss persistent {top_symptom}",
                         f"Track {top_symptom} severity and duration",
-                        f"Note any triggers or patterns"
+                        "Note any triggers or patterns"
                     ],
                     confidence=0.85,
                     data_points_used=top_data["frequency"],

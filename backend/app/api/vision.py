@@ -24,7 +24,7 @@ from app.core.auth import get_current_user
 from app.core.config import settings
 
 from app.core.database import vision_analyses
-from app.core.errors import ValidationError, AIProviderError, DatabaseError
+from app.core.errors import AIProviderError
 
 router = APIRouter(prefix="/vision", tags=["Vision - AI Image Analysis"])
 log = logging.getLogger(__name__)
@@ -267,7 +267,6 @@ Rules:
 - If unable to read clearly, note it in 'notes' field"""
 
         response = None
-        last_error = None
         
         for model_name in model_candidates:
             try:
@@ -280,7 +279,6 @@ Rules:
                     break
             except Exception as exc:
                 log.warning(f"Model {model_name} failed: {exc}")
-                last_error = exc
                 continue
 
         if not response or not response.text:
@@ -441,7 +439,6 @@ async def analyze_prescription(
         )
 
         response = None
-        last_error = None
         for model_name in model_candidates:
             try:
                 model = genai.GenerativeModel(model_name)
@@ -453,7 +450,6 @@ async def analyze_prescription(
                     break
             except Exception as exc:
                 log.warning(f"Model {model_name} failed: {exc}")
-                last_error = exc
                 continue
 
         if not response or not response.text:

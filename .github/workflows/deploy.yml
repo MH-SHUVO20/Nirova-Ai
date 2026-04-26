@@ -87,9 +87,11 @@ jobs:
 
       # ── Webhook deploy (Render, Railway, etc.) ────────────
       - name: Trigger deployment webhook
-        if: secrets.DEPLOY_WEBHOOK_URL != ''
+        if: ${{ env.DEPLOY_WEBHOOK_URL != '' }}
+        env:
+          DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
         run: |
-          curl -X POST "${{ secrets.DEPLOY_WEBHOOK_URL }}" \
+          curl -X POST "$DEPLOY_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d '{
               "ref": "${{ github.sha }}",

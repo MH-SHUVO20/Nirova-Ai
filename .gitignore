@@ -12,6 +12,7 @@ __pycache__/
 .venv/
 venv/
 *.egg-info/
+.pytest_cache/
 
 # Node
 node_modules/
@@ -29,3 +30,6 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Docker data volumes
+mongo_data/

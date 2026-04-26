@@ -20,3 +20,32 @@ scripts/
 # Documentation
 *.md
 LICENSE
+
+# CI/CD workflows
+.github/
+
+# Azure config
+.azure/
+
+# Node modules (rebuilt in container)
+frontend/node_modules/
+
+# Python artifacts
+**/__pycache__
+**/*.pyc
+**/*.pyo
+
+# Build output (rebuilt in container)
+frontend/dist/
+
+# Tests
+backend/tests/
+backend/.pytest_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large model files (pulled at runtime, not baked)
+backend/app/models/*.onnx
+backend/app/models/*.keras

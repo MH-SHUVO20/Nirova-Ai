@@ -3,7 +3,7 @@
 # Run: docker-compose up
 # Frontend: http://localhost:5173
 # Backend:  http://localhost:8000
-# API Docs: http://localhost:8000/docs
+# API Docs: http://localhost:8000/docs (only when DEBUG=true)
 
 services:
 
@@ -18,7 +18,9 @@ services:
     env_file:
       - .env
     environment:
-      MONGODB_URI: mongodb://mongo:27017
+      # Use authenticated MongoDB connection within the Docker network
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:-nirovaai}:${MONGO_INITDB_ROOT_PASSWORD:-change_me_in_env}@mongo:27017/nirovaai?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-change_me_in_env}@redis:6379
     volumes:
       - ./backend/app:/app/app
       - ./backend/app/models:/app/models
@@ -36,12 +38,15 @@ services:
       retries: 5
       start_period: 20s
 
-  # MongoDB
+  # MongoDB — bound to localhost only, authentication enabled
   mongo:
     image: mongo:7
     container_name: nirovaai_mongo
     ports:
-      - "27017:27017"
+      - "127.0.0.1:27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-nirovaai}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-change_me_in_env}
     volumes:
       - mongo_data:/data/db
     restart: unless-stopped
@@ -52,15 +57,16 @@ services:
       retries: 5
       start_period: 20s
 
-  # Redis Cache (optional)
+  # Redis Cache — bound to localhost only, password protected
   redis:
     image: redis:7-alpine
     container_name: nirovaai_redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:-change_me_in_env}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-change_me_in_env}", "ping"]
       interval: 30s
       timeout: 10s
       retries: 5

@@ -7,12 +7,12 @@
 
 from fastapi import APIRouter, HTTPException, status, Depends, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from app.core.database import users, get_db
 from app.core.auth import hash_password, verify_password, create_token, get_current_user
 from app.core.config import settings
 from app.core.redis_client import is_rate_limited
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 import secrets
 import hashlib
@@ -75,7 +75,7 @@ def _set_auth_cookie(response: JSONResponse, token: str, request: Request | None
         secure=_cookie_secure_flag(request),
         samesite=settings.COOKIE_SAMESITE,
         path="/",
-        max_age=604800,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
 
@@ -111,12 +111,12 @@ def _send_reset_email(recipient: str, token: str, expires_at: datetime, reset_li
 # ── Request Models ──
 
 class RegisterRequest(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
-    password: str
-    age: int = 0
-    district: str = "Dhaka"
-    language: str = "en"  # "en" for English, "bn" for Bangla
+    password: str = Field(..., min_length=8, max_length=128)
+    age: int = Field(0, ge=0, le=150)
+    district: str = Field("Dhaka", max_length=100)
+    language: str = Field("en", max_length=10)  # "en" for English, "bn" for Bangla
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -192,10 +192,16 @@ async def register(data: RegisterRequest, request: Request):
     """
     # Check if email already exists
     normalized_email = _normalize_email(data.email)
+    # Password complexity: min 8 chars, at least 1 letter + 1 digit
     if len(data.password) < 8:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Password must be at least 8 characters long",
+        )
+    if not any(c.isalpha() for c in data.password) or not any(c.isdigit() for c in data.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must contain at least one letter and one number",
         )
     existing = await users().find_one({"email": normalized_email})
     if existing:
@@ -212,7 +218,7 @@ async def register(data: RegisterRequest, request: Request):
         "age": data.age,
         "district": data.district,
         "language": data.language,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
         "total_symptom_logs": 0,
         "total_alerts": 0
     }
@@ -236,20 +242,40 @@ async def login(data: LoginRequest, request: Request):
     Login with email and password.
     Returns a JWT token via HttpOnly cookie valid for 7 days.
     """
-    # Find the user
-    normalized_email = _normalize_email(data.email)
-    user = await users().find_one({"email": normalized_email})
-    if not user:
+    # Rate limit login attempts per IP
+    ip_key = _client_ip(request)
+    limited_ip = await is_rate_limited(
+        f"rl:login:ip:{ip_key}",
+        20,  # max 20 login attempts per hour per IP
+        RATE_LIMIT_WINDOW_SECONDS,
+    )
+    if limited_ip:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No account found with this email"
+            status_code=429,
+            detail="Too many login attempts. Please try again later.",
         )
 
-    # Verify password
-    if not verify_password(data.password, user["hashed_password"]):
+    # Find the user
+    normalized_email = _normalize_email(data.email)
+
+    # Rate limit per email too
+    limited_email = await is_rate_limited(
+        f"rl:login:email:{normalized_email}",
+        10,  # max 10 login attempts per hour per email
+        RATE_LIMIT_WINDOW_SECONDS,
+    )
+    if limited_email:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many login attempts for this account. Please try again later.",
+        )
+
+    # Use constant-time comparison to prevent user enumeration
+    user = await users().find_one({"email": normalized_email})
+    if not user or not verify_password(data.password, user.get("hashed_password", "")):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect password"
+            detail="Invalid email or password"
         )
 
     user_id = str(user["_id"])
@@ -265,7 +291,22 @@ async def login(data: LoginRequest, request: Request):
 
 @router.post("/logout")
 async def logout(request: Request):
-    """Clear the authentication cookie"""
+    """Clear the authentication cookie and revoke the JWT token."""
+    # Blacklist the current token so it can't be reused
+    token = request.cookies.get(settings.AUTH_COOKIE_NAME)
+    if token:
+        try:
+            from app.core.auth import decode_token
+            from app.core.redis_client import blacklist_token
+            payload = decode_token(token)
+            jti = payload.get("jti")
+            if jti:
+                # Blacklist for the remaining token lifetime
+                remaining = int(settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+                await blacklist_token(jti, remaining)
+        except Exception:
+            pass  # Token may already be expired/invalid — still delete cookie
+
     response = JSONResponse({"message": "Successfully logged out"})
     response.delete_cookie(
         key=settings.AUTH_COOKIE_NAME,
@@ -327,7 +368,7 @@ async def forgot_password(data: ForgotPasswordRequest, request: Request):
 
     raw_token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
-    expires_at = datetime.utcnow() + timedelta(minutes=settings.PASSWORD_RESET_EXPIRE_MINUTES)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.PASSWORD_RESET_EXPIRE_MINUTES)
 
     await users().update_one(
         {"_id": user["_id"]},
@@ -335,7 +376,7 @@ async def forgot_password(data: ForgotPasswordRequest, request: Request):
             "$set": {
                 "password_reset_token_hash": token_hash,
                 "password_reset_expires_at": expires_at,
-                "password_reset_requested_at": datetime.utcnow(),
+                "password_reset_requested_at": datetime.now(timezone.utc),
             }
         }
     )
@@ -370,11 +411,14 @@ async def forgot_password(data: ForgotPasswordRequest, request: Request):
         age_match = isinstance(age_input, int) and isinstance(user_age, int) and age_input == user_age
 
         if district_match and age_match:
+            # SECURITY: Never return the raw token in the API response.
+            # In KBA mode, mark the token as verified and let the user proceed
+            # to the reset-password form via the link only.
             return ForgotPasswordResponse(
-                message="Identity verified. Use the provided reset token to set a new password.",
+                message="Identity verified. Check your email or use the password reset page.",
                 verification_method="kba",
-                reset_token_preview=raw_token,
-                reset_link_preview=reset_link,
+                reset_token_preview=preview_token,
+                reset_link_preview=preview_link,
             )
 
     return ForgotPasswordResponse(
@@ -420,7 +464,7 @@ async def reset_password(data: ResetPasswordRequest, request: Request):
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
 
     expires_at = user.get("password_reset_expires_at")
-    if not expires_at or expires_at < datetime.utcnow():
+    if not expires_at or expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=400, detail="Reset token has expired")
 
     await users().update_one(

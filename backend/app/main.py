@@ -133,17 +133,30 @@ This service is for informational support only and does not replace professional
     """,
     version="1.0.0",
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc"
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://nirova-ai-9f4u.vercel.app"],
+    allow_origins=settings.allowed_origins_list,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
+
+# ── Security Headers Middleware ──
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Add security headers to all responses."""
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    if settings.COOKIE_SECURE:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 # ── Structured Request/Response Logging Middleware ──
 @app.middleware("http")
@@ -240,5 +253,9 @@ if os.path.exists("static"):
         if full_path in skip_exact or any(full_path.startswith(s) for s in skip_prefix):
             from fastapi import HTTPException
             raise HTTPException(status_code=404)
+        # Prevent path traversal — reject anything with '..' or absolute paths
+        if ".." in full_path or full_path.startswith("/"):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=400)
         return FileResponse("static/index.html")
 

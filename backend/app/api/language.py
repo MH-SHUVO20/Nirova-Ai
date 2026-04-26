@@ -18,7 +18,7 @@ from app.core.language_detector import (
 from app.core.database import get_db
 
 log = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/language", tags=["language"])
+router = APIRouter(prefix="/language", tags=["language"])
 
 
 # Request/Response Models

@@ -9,7 +9,8 @@ How it works:
 3. Every protected request → token verified → user identified
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import uuid
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status, Request
@@ -34,13 +35,15 @@ def create_token(user_id: str) -> str:
     """
     Create a JWT token for a logged-in user.
     The token expires after 7 days (configured in settings).
+    Includes a unique JTI (JWT ID) for revocation support.
     """
-    expire = datetime.utcnow() + timedelta(
+    expire = datetime.now(timezone.utc) + timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
     payload = {
         "sub": user_id,      # subject = user ID
-        "exp": expire        # expiration time
+        "exp": expire,       # expiration time
+        "jti": str(uuid.uuid4()),  # unique token ID for revocation
     }
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
@@ -86,6 +89,19 @@ async def get_current_user(
 
     # Verify the token
     payload = decode_token(token)
+
+    # Check if token has been revoked (blacklisted)
+    token_jti = payload.get("jti")
+    if token_jti:
+        try:
+            from app.core.redis_client import is_token_blacklisted
+            if await is_token_blacklisted(token_jti):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has been revoked. Please log in again."
+                )
+        except ImportError:
+            pass  # Redis client not available, skip blacklist check
 
     user_id = payload.get("sub")
     if not user_id:

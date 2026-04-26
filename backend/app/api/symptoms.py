@@ -19,7 +19,7 @@ from app.ai.ml.disease_model import predict_disease
 from app.ai.ml.dengue_model import predict_dengue
 from app.core.rate_limit import limiter
 from app.tasks.health_timeline import get_user_health_timeline
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 import logging
@@ -134,7 +134,7 @@ async def _store_symptom_analysis(
             "symptoms": symptoms or [],
             "disease_prediction": disease_prediction,
             "dengue_prediction": dengue_prediction,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
         }
         if extra:
             payload["meta"] = extra
@@ -248,9 +248,9 @@ async def log_symptoms(
         "ai_analysis": {
             "analysis_mode": "log",
             "disease_prediction": prediction,
-            "saved_at": datetime.utcnow(),
+            "saved_at": datetime.now(timezone.utc),
         },
-        "date": datetime.utcnow()
+        "date": datetime.now(timezone.utc)
     }
 
     result = await symptom_logs().insert_one(log_entry)
@@ -264,7 +264,7 @@ async def log_symptoms(
             "probability": prediction.get("confidence"),
             "recommended_action": prediction.get("recommended_action"),
             "resolved": False,
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc)
         })
         log.info(f"High-risk alert created for user {user_id}: {prediction.get('predicted_disease')}")
 

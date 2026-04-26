@@ -9,7 +9,7 @@ All endpoints use Gemini Vision for multimodal analysis with
 medical safety considerations and fallback error handling.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 import base64
 import json
 import logging
@@ -23,8 +23,6 @@ from app.ai.vision.skin_model import analyze_skin_image
 from app.core.auth import get_current_user
 from app.core.config import settings
 
-# Debug: Print the loaded GEMINI_API_KEY to verify config loading
-print("DEBUG: Loaded GEMINI_API_KEY from config:", repr(settings.GEMINI_API_KEY))
 from app.core.database import vision_analyses
 from app.core.errors import ValidationError, AIProviderError, DatabaseError
 
@@ -61,7 +59,7 @@ async def _store_analysis(
                 "source_type": source_type,
                 "file_size": file_size,
                 "analysis": analysis,
-                "created_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
             }
         )
         log.info(f"Saved {analysis_type} analysis for user {current_user['_id']}: {result.inserted_id}")

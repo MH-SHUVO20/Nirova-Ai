@@ -95,6 +95,16 @@ Always be compassionate and helpful, but responsible about medical advice."""
 
 async def get_llm_response(messages: list) -> str:
     """Get response using configured provider routing."""
+    if not messages or not isinstance(messages, list):
+        return _normalize_response(_rule_based_response([]))
+    # Ensure messages are well-formed
+    messages = [
+        m for m in messages
+        if isinstance(m, dict) and "role" in m and "content" in m
+    ]
+    if not messages:
+        return _normalize_response(_rule_based_response([]))
+
     for provider in _provider_order():
         if _is_disabled(provider):
             continue
@@ -166,12 +176,21 @@ async def _groq_stream(messages: list) -> AsyncGenerator[str, None]:
 
 
 async def _gemini_complete(messages: list) -> str:
+    import asyncio
     _ensure_gemini_configured()
     model = genai.GenerativeModel("gemini-1.5-flash")
     conversation = "\n".join(
         [f"{m['role'].upper()}: {m['content']}" for m in messages if m.get("role") != "system"]
     )
-    response = model.generate_content(conversation)
+    try:
+        response = await asyncio.wait_for(
+            asyncio.get_event_loop().run_in_executor(
+                None, lambda: model.generate_content(conversation)
+            ),
+            timeout=30,
+        )
+    except asyncio.TimeoutError:
+        raise RuntimeError("Gemini response timed out after 30s")
     return response.text or ""
 
 

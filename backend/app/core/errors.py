@@ -8,7 +8,7 @@ Critical for AI-based medical application safety and debuggability.
 from fastapi import HTTPException, status
 from typing import Optional, Dict, Any
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 log = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class NirovaError(Exception):
         self.user_message = user_message or "An error occurred. Please try again."
         self.details = details or {}
         self.safe_to_expose = safe_to_expose  # If False, never expose details to user
-        self.timestamp = datetime.utcnow().isoformat()
+        self.timestamp = datetime.now(timezone.utc).isoformat()
 
 
 class DatabaseError(NirovaError):
@@ -264,7 +264,7 @@ class RequestLogger:
             "method": method,
             "path": path,
             "user_id": user_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         if details:
             log_data.update(details)
@@ -286,7 +286,7 @@ class RequestLogger:
             "status_code": status_code,
             "duration_ms": duration_ms,
             "user_id": user_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         log.info(json.dumps(log_data))
     

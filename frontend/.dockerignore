@@ -1,0 +1,22 @@
+# Secrets
+.env
+.env.*
+.env.local
+
+# Version control
+.git
+.gitignore
+
+# Dependencies (rebuilt in container)
+node_modules/
+
+# IDE / Editor
+.vscode
+.idea
+
+# Build output (rebuilt in container)
+dist/
+
+# Documentation
+*.md
+LICENSE

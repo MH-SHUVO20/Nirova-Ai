@@ -37,7 +37,7 @@ from app.ai.rag.retriever import retrieve_knowledge, build_knowledge_context
 from app.core.redis_client import cache_get, cache_set
 from app.core.rate_limit import limiter
 from app.core.config import settings
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from bson.errors import InvalidId
 import hashlib
@@ -555,7 +555,7 @@ async def ask(
     context_sig = await _context_fingerprint(current_user["_id"], safe_mode)
     
     # DEBUG: Log mode for debugging cache issues
-    log.info(f"[Chat Ask] User: {current_user.get('email', 'unknown')} | Mode: {safe_mode} | Question: {safe_question[:50]}...")
+    log.info(f"[Chat Ask] User: {str(current_user.get('_id', 'unknown'))[:8]}... | Mode: {safe_mode} | Q_len: {len(safe_question)}")
 
     # Scope cache per user and latest analysis context so stale replies are avoided.
     cache_payload = {
@@ -702,7 +702,7 @@ async def get_chat_history(
                 "session_id": str(doc["_id"]),
                 "messages": doc.get("messages", [])[:100],  # Limit to last 100 messages
                 "agent_mode": doc.get("agent_mode", "general"),
-                "updated_at": (doc.get("updated_at") or doc.get("created_at", datetime.utcnow())).isoformat()
+                "updated_at": (doc.get("updated_at") or doc.get("created_at", datetime.now(timezone.utc))).isoformat()
             })
         
         return {
@@ -855,7 +855,6 @@ async def clear_chat_session(current_user: dict = Depends(get_current_user)):
         return {
             "status": "error",
             "message": "Unable to clear sessions",
-            "error": str(e)
         }
 
 
@@ -884,7 +883,6 @@ async def clear_page_context(
         return {
             "status": "error",
             "message": "Unable to clear context",
-            "error": str(e)
         }
 
 
@@ -916,7 +914,6 @@ async def logout_cleanup(current_user: dict = Depends(get_current_user)):
         return {
             "status": "error",
             "message": "Logout cleanup failed",
-            "error": str(e)
         }
 
 
@@ -990,6 +987,17 @@ async def _handle_websocket_message(websocket: WebSocket, user_id: str):
         raise
     except Exception as e:
         log.error(f"WebSocket receive error: {e}")
+        return
+
+    # Enforce maximum WebSocket message size (16 KB) — check BEFORE parsing
+    if len(raw) > 16384:
+        try:
+            await websocket.send_json({
+                "type": "error",
+                "content": "Message too large. Please shorten your question."
+            })
+        except Exception:
+            pass
         return
 
     # Parse message
@@ -1152,7 +1160,7 @@ Language Rule: {lang_instruction}
                 "response": full_response,
                 "sources": sources,
                 "agent_mode": agent_mode,
-                "created_at": datetime.utcnow(),
+                "created_at": datetime.now(timezone.utc),
             })
     except Exception as e:
         log.warning(f"Failed to save chat history: {e}")
@@ -1398,7 +1406,7 @@ async def _save_message(
                     {
                         "$push": {"messages": {"$each": new_messages}},
                         "$set": {
-                            "updated_at": datetime.utcnow(),
+                            "updated_at": datetime.now(timezone.utc),
                             "agent_mode": (agent_mode or "general").strip().lower(),
                         }
                     }
@@ -1413,8 +1421,8 @@ async def _save_message(
             "user_id": user_obj_id,
             "agent_mode": (agent_mode or "general").strip().lower(),
             "messages": new_messages,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
         })
         return str(result.inserted_id)
 

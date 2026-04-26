@@ -20,7 +20,7 @@ from app.core.analytics import (
 )
 
 log = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/analytics", tags=["analytics"])
+router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
 async def fetch_user_health_data(db, user_id: str, days: int):

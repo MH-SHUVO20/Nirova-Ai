@@ -1,0 +1,22 @@
+# Secrets — NEVER bake into Docker images
+.env
+.env.*
+*.env
+backend/.env
+frontend/.env.local
+
+# Version control
+.git
+.gitignore
+
+# IDE / Editor
+.vscode
+.idea
+
+# Infrastructure (not needed in containers)
+infrastructure/
+scripts/
+
+# Documentation
+*.md
+LICENSE

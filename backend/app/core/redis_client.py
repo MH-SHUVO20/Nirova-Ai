@@ -143,3 +143,40 @@ async def is_rate_limited(key: str, max_requests: int, window_seconds: int) -> b
 
     entry["count"] += 1
     return entry["count"] > max_requests
+
+
+# -- Token Blacklist (for JWT revocation on logout/password change) --
+
+_local_blacklist: dict[str, float] = {}
+
+
+async def blacklist_token(token_jti: str, expires_in_seconds: int) -> None:
+    """Add a token to the blacklist so it cannot be reused after logout."""
+    if _redis:
+        try:
+            await _redis.setex(f"bl:{token_jti}", expires_in_seconds, "1")
+            return
+        except Exception as e:
+            log.warning(f"Redis blacklist_token failed: {e}")
+
+    # Fallback to local memory
+    _local_blacklist[token_jti] = time.time() + expires_in_seconds
+
+
+async def is_token_blacklisted(token_jti: str) -> bool:
+    """Check if a token has been revoked."""
+    if _redis:
+        try:
+            result = await _redis.get(f"bl:{token_jti}")
+            return result is not None
+        except Exception:
+            pass
+
+    # Fallback to local memory
+    entry = _local_blacklist.get(token_jti)
+    if entry is None:
+        return False
+    if entry <= time.time():
+        _local_blacklist.pop(token_jti, None)
+        return False
+    return True
